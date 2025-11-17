@@ -1,0 +1,62 @@
+﻿@model List<SmartCalendar.Models.Event>
+@{
+    ViewData["Title"] = "Tüm Etkinlikler";
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">📋 Tüm Etkinlikler</h2>
+
+    @if (Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@item.Title</h5>
+                    <p class="card-text">
+                        <span class="text-muted">🕒 @item.StartDate.ToString("g")</span><br />
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <span>📝 @item.Description</span>
+
+                            <br />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.Location))
+                        {
+                            <span>📍 @item.Location</span>
+
+                            <br />
+                        }
+                        @if (item.Tags?.Any() == true)
+                        {
+                            <div class="mt-1">
+                                @foreach (var tag in item.Tags)
+                                {
+                                    <span class="badge badge-primary">@tag.Name</span>
+                                }
+                            </div>
+                        }
+                    </p>
+                </div>
+            </div>
+        }
+
+        <!-- Sayfalama -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("AllEvents", new { page = i })">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+    else
+    {
+        <div class="alert alert-info">Henüz hiçbir etkinliğiniz yok.</div>
+    }
+</div>

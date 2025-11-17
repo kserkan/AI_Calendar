@@ -1,0 +1,97 @@
+﻿@{
+    ViewData["Title"] = "AI ile Etkinlik Oluştur";
+}
+
+<h2>🧠 AI ile Etkinlik Oluştur</h2>
+
+<div class="form-group mb-3">
+    <label for="promptText">Doğal dilde cümle:</label>
+    <textarea id="promptText" class="form-control" rows="3" placeholder="Örn: Cuma sabah saat 10:00'da sınavım var"></textarea>
+    <button id="analyzeBtn" class="btn btn-primary mt-2">AI ile Çözümle</button>
+</div>
+
+<div id="resultForm" style="display:none;">
+    <hr />
+    <h5>📋 AI Önerisi</h5>
+    <form id="confirmForm">
+        <input id="title" class="form-control mb-2" placeholder="Başlık" />
+        <input id="date" type="date" class="form-control mb-2" />
+        <input id="time" type="time" class="form-control mb-2" />
+        <textarea id="description" class="form-control mb-2" placeholder="Açıklama"></textarea>
+        <input id="category" class="form-control mb-2" placeholder="Kategori" />
+        <input id="location" class="form-control mb-2" placeholder="Lokasyon" />
+        <button type="submit" class="btn btn-success">Etkinliği Kaydet</button>
+    </form>
+</div>
+
+<div id="messageArea" class="mt-4"></div>
+
+@section Scripts {
+    <script>
+        $("#analyzeBtn").click(function () {
+            const prompt = $("#promptText").val();
+            if (!prompt) {
+                $("#messageArea").html("<div class='alert alert-warning'>Lütfen bir cümle girin.</div>");
+                return;
+            }
+
+            $("#messageArea").html("⏳ AI analiz ediyor...");
+            $("#resultForm").hide();
+
+            $.ajax({
+                type: "POST",
+                url: "/AI/Analyze",
+                contentType: "application/json",
+                data: JSON.stringify({ prompt }),
+                success: function (data) {
+                    $("#title").val(data.title);
+                    $("#date").val(data.date);
+                    $("#time").val(data.time);
+                    $("#description").val(data.description);
+                    $("#category").val(data.category);
+                    $("#location").val("");
+                    $("#resultForm").fadeIn();
+                    $("#messageArea").html("<div class='alert alert-info'>AI önerisi hazır. İstersen düzenleyip kaydedebilirsin.</div>");
+                },
+                error: function (xhr) {
+                    $("#messageArea").html("<div class='alert alert-danger'>AI yanıtı alınamadı: " + xhr.responseText + "</div>");
+                }
+            });
+        });
+
+        $("#confirmForm").submit(function (e) {
+            e.preventDefault();
+
+            const data = {
+                title: $("#title").val(),
+                date: $("#date").val(),
+                time: $("#time").val(),
+                description: $("#description").val(),
+                category: $("#category").val(),
+                location: $("#location").val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/AI/Confirm",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function () {
+                    $("#messageArea").html("<div class='alert alert-success'>✅ Etkinlik takvime eklendi.</div>");
+                    $("#resultForm").hide();
+                    $("#promptText").val("");
+
+                    // 🔄 Takvimi güncelle
+                    if (typeof calendar !== 'undefined' && calendar) {
+                        calendar.refetchEvents();
+                    } else if (window.parent?.calendar) {
+                        window.parent.calendar.refetchEvents();
+                    }
+                },
+                error: function () {
+                    $("#messageArea").html("<div class='alert alert-danger'>Etkinlik kaydedilemedi.</div>");
+                }
+            });
+        });
+    </script>
+}

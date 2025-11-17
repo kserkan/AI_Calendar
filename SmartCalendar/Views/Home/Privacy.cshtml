@@ -1,0 +1,44 @@
+﻿@{
+    ViewData["Title"] = "Gizlilik Politikası";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+
+            <div class="card shadow-sm border-0 rounded-4 p-4">
+                <div class="card-body">
+                    <h2 class="mb-4 text-primary"><i class="bi bi-shield-lock-fill me-2"></i>Gizlilik Politikası</h2>
+
+                    <p>Bu sayfa, SmartCalendar kullanıcılarının kişisel verilerinin nasıl toplandığını, kullanıldığını ve korunduğunu açıklar.</p>
+
+                    <h5 class="mt-4 text-secondary">1. Toplanan Bilgiler</h5>
+                    <p>Kayıt sırasında adınız, e-posta adresiniz ve şifreniz gibi temel bilgiler toplanır. Bu bilgiler yalnızca sistemin işleyişi için kullanılır.</p>
+
+                    <h5 class="mt-4 text-secondary">2. Verilerin Kullanımı</h5>
+                    <p>Toplanan bilgiler takvim etkinliklerinizi yönetmek, size hatırlatma e-postaları göndermek ve hesabınızı güvenli tutmak için kullanılır.</p>
+
+                    <h5 class="mt-4 text-secondary">3. Bilgi Paylaşımı</h5>
+                    <p>Hiçbir kullanıcı bilgisi üçüncü taraflarla paylaşılmaz. Yalnızca yasal zorunluluk halinde resmi makamlarla paylaşım yapılabilir.</p>
+
+                    <h5 class="mt-4 text-secondary">4. Çerezler (Cookies)</h5>
+                    <p>Web sitemiz kullanıcı deneyimini geliştirmek için çerezler kullanır. Tarayıcı ayarlarınızdan çerezleri devre dışı bırakabilirsiniz.</p>
+
+                    <h5 class="mt-4 text-secondary">5. Güvenlik</h5>
+                    <p>Verileriniz, modern güvenlik teknolojileri ile korunur. Şifreleriniz geri döndürülemeyecek şekilde şifrelenir.</p>
+
+                    <h5 class="mt-4 text-secondary">6. İletişim</h5>
+                    <p>Gizlilik politikamızla ilgili sorularınız için bizimle <a href="mailto:destek@smartcalendar.com">destek@smartcalendar.com</a> adresinden iletişime geçebilirsiniz.</p>
+
+                    <hr />
+                    <p class="small text-muted">Bu gizlilik politikası en son @DateTime.Now.ToString("dd.MM.yyyy") tarihinde güncellenmiştir.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+}

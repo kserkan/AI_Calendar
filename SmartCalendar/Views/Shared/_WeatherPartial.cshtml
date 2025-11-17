@@ -1,0 +1,27 @@
+﻿@using SmartCalendar.Models.Weather
+@{
+    var weather = ViewBag.Weather as WeatherInfo;
+}
+
+@if (weather != null)
+{
+    <div class="card shadow-sm bg-light">
+        <div class="card-body">
+            <h5 class="card-title text-primary">
+                <i class="bi bi-geo-alt-fill me-1"></i>@weather.City - @weather.Description
+            </h5>
+            <p class="card-text">
+                🌡️ <strong>Sıcaklık:</strong> @weather.Temperature°C<br />
+                💨 <strong>Rüzgar:</strong> @weather.WindSpeed m/s<br />
+                ☁️ <strong>Nem:</strong> @weather.Humidity%<br />
+                📅 <strong>Tarih:</strong> @weather.Date.ToString("dd MMMM yyyy")
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning shadow-sm">
+        <i class="bi bi-exclamation-circle me-1"></i>Hava durumu bilgisi alınamadı veya şehir girilmedi.
+    </div>
+}

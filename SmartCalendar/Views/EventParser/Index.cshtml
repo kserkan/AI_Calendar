@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "AI ile Etkinlik Ekle";
+}
+
+<h2>📅 AI Destekli Etkinlik Oluştur</h2>
+
+<form asp-controller="EventParser" asp-action="Parse" method="post">
+    <div class="form-group">
+        <label for="sentence">Etkinlik cümlesi:</label>
+        <textarea name="sentence" class="form-control" rows="3" required>@ViewBag.Input</textarea>
+    </div>
+    <button type="submit" class="btn btn-success mt-2">Ekle</button>
+</form>
+
+@if (ViewBag.Success != null)
+{
+    <div class="alert alert-success mt-3">@ViewBag.Success</div>
+}
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger mt-3">@ViewBag.Error</div>
+    @if (ViewBag.Raw != null)
+    {
+        <pre>@ViewBag.Raw</pre>
+    }
+}
+@if (ViewBag.ParsedJson != null)
+{
+    <hr />
+    <h4>🎯 Model Çıktısı:</h4>
+    <pre>@ViewBag.ParsedJson.ToString()</pre>
+}

@@ -1,0 +1,56 @@
+﻿@model SmartCalendar.Models.ViewModels.AllEventsViewModel
+
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-center">
+    <form id="filterForm" class="d-flex flex-wrap">
+        <select id="filterTag" class="form-select me-2 mb-2" style="max-width: 200px;">
+            <option value="">-- Etiket --</option>
+            @foreach (var tag in Model.Tags)
+            {
+                <option value="@tag.Name">@tag.Name</option>
+            }
+        </select>
+
+        <select id="filterStatus" class="form-select me-2 mb-2" style="max-width: 200px;">
+            <option value="">-- Durum --</option>
+            <option value="active">Aktif</option>
+            <option value="completed">Tamamlandı</option>
+        </select>
+
+        <button type="submit" class="btn btn-sm btn-primary mb-2">Filtrele</button>
+    </form>
+</div>
+
+@if (Model.Events.Any())
+{
+    <ul class="list-group">
+        @foreach (var ev in Model.Events)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@ev.Title</strong>
+                    <br />
+                    <small class="text-muted">@ev.StartDate.ToString("g")</small>
+                    @if (!string.IsNullOrWhiteSpace(ev.Description))
+                    {
+                        <br />
+
+                        <small class="text-muted">@ev.Description</small>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ev.Location))
+                    {
+                        <br />
+
+                        <span class="badge bg-secondary">📍 @ev.Location</span>
+                    }
+                </div>
+                <span class="badge bg-@(ev.EndDate < DateTime.Now ? "danger" : "success")">
+                    @(ev.EndDate < DateTime.Now ? "Tamamlandı" : "Aktif")
+                </span>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="alert alert-info">Gösterilecek etkinlik bulunamadı.</div>
+}

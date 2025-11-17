@@ -1,0 +1,96 @@
+﻿@model SmartCalendar.Models.Dtos.UserLoginDto
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="card shadow-lg rounded-5 border-0 overflow-hidden" style="max-width: 450px; width: 100%;">
+        <div class="row g-0">
+            <div class="col-12">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="text-primary mb-3">
+                            <i class="bi bi-calendar-check-fill" style="font-size: 3.5rem;"></i>
+                        </div>
+                        <h2 class="fw-bold mb-2">Giriş Yap</h2>
+                        <p class="text-muted">Akıllı takviminize erişmek için giriş yapın.</p>
+                    </div>
+
+                    <!-- Genel Hatalar -->
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger rounded-3 shadow-sm">
+                            @Html.ValidationSummary()
+                        </div>
+                    }
+
+                    @if (TempData["LoginError"] != null)
+                    {
+                        <div class="alert alert-danger rounded-3 shadow-sm">
+                            @TempData["LoginError"]
+                        </div>
+                    }
+
+                    <!-- Giriş Formu -->
+                    <form asp-action="Login" method="post" novalidate>
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label visually-hidden">E-posta</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bi bi-envelope-fill text-muted"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="E-posta adresiniz" aria-label="E-posta" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Password" class="form-label visually-hidden">Şifre</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="bi bi-key-fill text-muted"></i></span>
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Şifreniz" aria-label="Şifre" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill animate__animated animate__pulse animate__infinite">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Giriş Yap
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Veya bölümü -->
+                    <div class="text-center my-4">
+                        <span class="position-relative d-inline-block">
+                            <span class="bg-white px-3 text-muted small text-uppercase fw-semibold">Veya</span>
+                            <hr class="position-absolute top-50 translate-middle-y w-100" style="z-index: -1;">
+                        </span>
+                    </div>
+
+                    <!-- Google Giriş -->
+                    <form method="get" action="/Account/GoogleLogin">
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-outline-danger btn-lg rounded-pill">
+                                <i class="bi bi-google me-2"></i> Google ile Giriş Yap
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Kayıt Yönlendirmesi -->
+                    <div class="text-center text-muted">
+                        <small>Hesabınız yok mu?</small>
+                        <a asp-action="Register" class="fw-bold text-decoration-none text-primary ms-1">Kayıt Ol</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

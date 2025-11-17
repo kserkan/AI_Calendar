@@ -1,0 +1,90 @@
+﻿
+@{
+    ViewData["Title"] = "Ana Sayfa";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Sayfa düzeni yüklensin
+}
+
+<link rel="stylesheet" href="~/css/bootstrap-icons.min.css">
+<link rel="stylesheet" href="~/css/dark-mode.css">
+
+<div class="container py-4">
+    <h2 class="mb-4 text-primary">
+        <i class="bi bi-calendar-event-fill me-2"></i>Tarihler Arası Hesaplama
+    </h2>
+
+    <!-- Tarih Hesaplama Formu -->
+    <form id="dateForm" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Başlangıç Tarihi</label>
+            <input type="date" name="startDate" class="form-control" required />
+        </div>
+        <div class="col-md-5">
+            <label class="form-label fw-semibold">Bitiş Tarihi</label>
+            <input type="date" name="endDate" class="form-control" required />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-arrow-repeat me-1"></i>Hesapla
+            </button>
+        </div>
+    </form>
+    <div id="dateResultArea"></div>
+
+    <!-- Hava Durumu Formu -->
+    <h3 class="mt-5 text-primary">
+        <i class="bi bi-cloud-sun-fill me-1"></i>Hava Durumu
+    </h3>
+    <form id="weatherForm" class="row g-2 align-items-center mb-3">
+        <div class="col-md-9">
+            <input type="text" id="weatherCityInput" name="city" class="form-control" placeholder="Şehir giriniz..." required />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="bi bi-search me-1"></i>Getir
+            </button>
+        </div>
+    </form>
+    <div id="weatherResultArea"></div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        $(function () {
+            $("#dateForm").on("submit", function (e) {
+                e.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: "/Home/CalculateDateRange",
+                    data: $(this).serialize(),
+                    success: function (result) {
+                        $("#dateResultArea").html(result);
+                    },
+                    error: function () {
+                        $("#dateResultArea").html('<div class="alert alert-danger">Bir hata oluştu.</div>');
+                    }
+                });
+            });
+
+            $("#weatherForm").on("submit", function (e) {
+                e.preventDefault();
+                var city = $("#weatherCityInput").val().trim();
+                if (!city) {
+                    $("#weatherResultArea").html('<div class="alert alert-warning">Lütfen bir şehir giriniz.</div>');
+                    return;
+                }
+                $.ajax({
+                    type: "GET",
+                    url: "/Home/GetWeatherPartial",
+                    data: { city: city },
+                    success: function (result) {
+                        $("#weatherResultArea").html(result);
+                    },
+                    error: function () {
+                        $("#weatherResultArea").html('<div class="alert alert-danger">Hava durumu alınamadı. Lütfen şehir adını kontrol edin.</div>');
+                    }
+                });
+            });
+        });
+    </script>
+}

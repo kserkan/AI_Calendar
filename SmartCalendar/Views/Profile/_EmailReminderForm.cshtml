@@ -1,0 +1,29 @@
+﻿@* Views/Profile/_EmailReminderForm.cshtml *@
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <p><strong>Hatırlatma E-Postası:</strong> @(ViewBag.ReceiveReminders as bool? == true ? "Açık" : "Kapalı")</p>
+
+        <form asp-controller="Profile" asp-action="UpdateEmailSettings" method="post">
+            <div class="form-check mt-3">
+                <input type="checkbox"
+                       class="form-check-input"
+                       id="ReceiveReminders"
+                       name="ReceiveReminders"
+                       value="true"
+                @(ViewBag.ReceiveReminders as bool? == true ? "checked" : "") />
+                <label class="form-check-label" for="ReceiveReminders">
+                    📩 Hatırlatma e-postası almak istiyorum
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Kaydet</button>
+        </form>
+
+    </div>
+</div>

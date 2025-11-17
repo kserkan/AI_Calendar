@@ -1,0 +1,60 @@
+﻿@using SmartCalendar.Models
+@model dynamic
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger shadow-sm">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>@ViewBag.Error
+    </div>
+}
+else if (ViewBag.TotalDays != null)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title text-success"><i class="bi bi-clock-history me-1"></i>Hesaplama Sonuçları</h5>
+            <p class="card-text">
+                📆 Toplam Gün: <strong>@ViewBag.TotalDays</strong><br />
+                📆 Hafta: <strong>@ViewBag.TotalWeeks</strong><br />
+                🕒 Saat: <strong>@ViewBag.TotalHours</strong><br />
+                🧑‍💻 İş Günü: <strong>@ViewBag.BusinessDays</strong><br />
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-flag-fill me-1"></i>Resmi Tatiller
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in (List<HolidayItem>)ViewBag.NationalHolidays)
+                    {
+                        <li class="list-group-item">
+                            @item.Date.ToString("dd.MM.yyyy") - @item.LocalName
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-secondary text-white">
+                    <i class="bi bi-moon-stars-fill me-1"></i>Dini Tatiller
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in (List<HolidayItem>)ViewBag.ReligiousHolidays)
+                    {
+                        <li class="list-group-item">
+                            @item.Date.ToString("dd.MM.yyyy") - @item.LocalName
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Henüz hesaplama yapılmadı.</div>
+}

@@ -1,0 +1,46 @@
+## Visual Studio ve .NET Standart Ignore Kuralları ##
+
+# Derleme ve çıktı klasörleri (En önemlileri)
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio kullanıcıya özel dosyalar ve önbellek
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code (Eğer kullanıyorsanız)
+.vscode/
+
+# Kullanıcı ayarları ve çalışma alanı
+*.rut
+*.pdb
+*.ipch
+*.aprof
+*.pwl
+
+# Test sonuçları
+TestResults/
+*.trx
+
+# Yayınlama (Publish) çıktıları
+*.publishsettings
+/publish/
+
+# Paketler (NuGet paketleri geri yüklenebilir, depoda tutmaya gerek yok)
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# İşletim Sistemi dosyaları
+.DS_Store
+Thumbs.db
+
+# Hassas dosyalar (Şifre vb. içerebilir - Güvenlik için)
+appsettings.Development.json
+appsettings.local.json
+.env

@@ -1,0 +1,499 @@
+﻿@model List<SmartCalendar.Models.Event>
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "Takvim";
+    var selectedTag = Context.Request.Query["tag"].ToString();
+    var tags = ViewBag.Tags as List<SmartCalendar.Models.Tag> ?? new List<SmartCalendar.Models.Tag>();
+    var aiJson = Context.Request.Query["ai"].ToString();
+    dynamic data = null;
+    if (!string.IsNullOrEmpty(aiJson))
+    {
+        data = JsonConvert.DeserializeObject(aiJson);
+    }
+}
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!--<button class="btn btn-outline-info mt-3" id="loadWeeklyPlan">AI Haftalık Plan Önerisi</button> -->
+<div id="aiPlan" class="alert alert-light mt-3 d-none"></div>
+
+
+<!-- AI Etkinlik Modal -->
+<div class="modal fade" id="aiEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+            <form id="confirmAIForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">AI Etkinlik Önerisi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><b>Başlık:</b> <span id="aiTitle"></span></p>
+                <p><b>Tarih:</b> <span id="aiDate"></span></p>
+                <p><b>Saat:</b> <span id="aiTime"></span></p>
+                <p><b>Açıklama:</b> <span id="aiDescription"></span></p>
+                <p><b>Kategori:</b> <span id="aiCategory"></span></p>
+
+                <div class="form-floating mb-3">
+                    <input type="text" name="location" class="form-control" id="aiLocation" placeholder="Konum">
+                    <label for="aiLocation">Konum (isteğe bağlı)</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="text" name="category" class="form-control" id="aiCategoryInput" placeholder="Etiket">
+                    <label for="aiCategoryInput">Etiket / Kategori</label>
+                </div>
+
+                <!-- Gizli inputlar -->
+                <input type="hidden" name="title" />
+                <input type="hidden" name="date" />
+                <input type="hidden" name="time" />
+                <input type="hidden" name="description" />
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Takvime Ekle</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!--<form id="aiPromptForm" class="mb-3">
+    <textarea name="prompt" class="form-control" rows="3" placeholder="Etkinlik açıklamasını yaz..." required></textarea>
+    <button type="submit" class="btn btn-primary mt-2">AI'ya Sor</button>
+</form>-->
+
+@if (data != null)
+{
+    <div class="alert alert-info mt-4">
+        <h5>AI'dan Gelen Etkinlik Önerisi:</h5>
+        <p><b>Başlık:</b> @data.title</p>
+        <p><b>Tarih:</b> @data.date</p>
+        <p><b>Saat:</b> @data.time</p>
+        <p><b>Açıklama:</b> @data.description</p>
+        <p><b>Kategori:</b> @data.category</p>
+
+        <form asp-action="ConfirmAIEvent" method="post">
+            <input type="hidden" name="title" value="@data.title" />
+            <input type="hidden" name="date" value="@data.date" />
+            <input type="hidden" name="time" value="@data.time" />
+            <input type="hidden" name="description" value="@data.description" />
+            <input type="hidden" name="category" value="@data.category" />
+            <button type="submit" class="btn btn-success">Takvime Ekle</button>
+        </form>
+    </div>
+}
+
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary fw-bold"><i class="bi bi-calendar-event me-2"></i>Takvim</h2>
+                <form asp-controller="Calendar" asp-action="ImportGoogleEvents" method="post">
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="bi bi-cloud-arrow-down me-1"></i>Google Takvimini Aktar
+                    </button>
+                </form>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white fw-semibold">Yeni Etkinlik</div>
+                        <div class="card-body">
+                            <form method="post" action="/Calendar/AddEvent">
+                                <div class="form-floating mb-3">
+                                    <input type="text" name="title" class="form-control" id="title" required>
+                                    <label for="title">Başlık</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="datetime-local" name="startDate" class="form-control" id="startDate" required>
+                                    <label for="startDate">Başlangıç</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="datetime-local" name="endDate" class="form-control" id="endDate">
+                                    <label for="endDate">Bitiş</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="number" name="ReminderMinutesBefore" class="form-control" id="reminder">
+                                    <label for="reminder">Hatırlatma (dk)</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <textarea name="description" class="form-control" id="description" style="height: 80px"></textarea>
+                                    <label for="description">Açıklama</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="text" name="location" class="form-control" id="location">
+                                    <label for="location">Konum</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Etiketler</label>
+                                    <select name="TagIds" id="tagSelect" class="form-select" multiple>
+                                        @foreach (var tag in tags)
+                                        {
+                                            <option value="@tag.Name">@tag.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Etkinlik Ekle</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body">
+                            <form method="get" asp-action="Index" class="row g-2 align-items-center">
+                                <div class="col-md-9">
+                                    <select name="tag" class="form-select">
+                                        <option value="">-- Tüm Etiketler --</option>
+                                        @foreach (var tag in tags)
+                                        {
+                                            <option value="@tag.Name" selected="@(selectedTag == tag.Name)">@tag.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-outline-primary w-100">Filtrele</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="/Calendar/UpdateEvent" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Etkinlik Detayları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" id="eventId" />
+                <div class="form-floating mb-2">
+                    <input type="text" name="title" id="eventTitle" class="form-control" required />
+                    <label for="eventTitle">Başlık</label>
+                </div>
+                <div class="form-floating mb-2">
+                    <input type="datetime-local" name="startDate" id="eventStartDate" class="form-control" required />
+                    <label for="eventStartDate">Başlangıç</label>
+                </div>
+                <div class="form-floating mb-2">
+                    <input type="datetime-local" name="endDate" id="eventEndDate" class="form-control" />
+                    <label for="eventEndDate">Bitiş</label>
+                </div>
+                <div class="form-floating mb-2">
+                    <textarea name="description" id="eventDescription" class="form-control" style="height: 80px"></textarea>
+                    <label for="eventDescription">Açıklama</label>
+                </div>
+                <div class="form-floating mb-2">
+                    <input type="text" name="location" id="eventLocation" class="form-control" />
+                    <label for="eventLocation">Konum</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Güncelle</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#tagSelect').select2({ tags: true, width: '100%', tokenSeparators: [','] });
+    });
+</script>
+
+<style>
+    #calendar {
+        background: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        min-height: 600px;
+    }
+
+    body.dark-mode #calendar {
+        background: #2b2b2b;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .fc .fc-toolbar-title,
+    body.dark-mode .fc-daygrid-day-number,
+    body.dark-mode .fc-event {
+        color: #e0e0e0 !important;
+    }
+
+    body.dark-mode .fc-daygrid-day {
+        background-color: #1f1f1f !important;
+    }
+
+    body.dark-mode .fc-scrollgrid,
+    body.dark-mode .fc-daygrid-day-frame {
+        border-color: #444 !important;
+    }
+</style>
+
+
+<script>
+    $(document).ready(function () {
+        $('#tagSelect').select2({
+            tags: true,
+            width: '100%',
+            tokenSeparators: [',']
+        });
+    });
+
+        document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            editable: true,
+            selectable: true,
+            eventSources: [
+                {
+                    url: '/Calendar/GetEvents',
+                    method: 'GET',
+                    extraParams: function () {
+                        return { tag: $('select[name="tag"]').val() };
+                    },
+                    color: '#007bff'
+                },
+                {
+                    url: '/Calendar/GetGoogleHolidayEvents',
+                    color: '#dc3545',
+                    textColor: '#fff'
+                }
+            ],
+            dateClick: function (info) {
+                const title = prompt("Yeni etkinliğin başlığı:");
+                if (title) {
+                    fetch('/Calendar/AddEventFromCalendar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: title, startDate: info.dateStr })
+                    }).then(res => res.ok ? location.reload() : alert("Etkinlik eklenemedi."));
+                }
+            },
+            eventClick: function (info) {
+                $('#eventId').val(info.event.id);
+                $('#eventTitle').val(info.event.title);
+                $('#eventStartDate').val(info.event.start.toISOString().slice(0, 16));
+                $('#eventEndDate').val(info.event.end ? info.event.end.toISOString().slice(0, 16) : '');
+                $('#eventDescription').val(info.event.extendedProps.description);
+                $('#eventLocation').val(info.event.extendedProps.location);
+
+                const footer = $('#eventModal .modal-footer');
+                footer.find('.delete-btn').remove();
+                const deleteBtn = $('<button class="btn btn-danger delete-btn ms-auto">Sil</button>');
+                deleteBtn.on('click', function () {
+                    if (confirm("Bu etkinliği silmek istediğinize emin misiniz?")) {
+                        fetch('/Calendar/DeleteEvent', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `id=${info.event.id}`
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert(data.message || "Etkinlik silinemedi.");
+                            }
+                        });
+                    }
+                });
+                footer.append(deleteBtn);
+
+                $('#eventModal').modal('show');
+            },
+            eventDrop: function (info) {
+                fetch('/Calendar/UpdateEventFromCalendar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: info.event.id,
+                        startDate: info.event.start.toISOString(),
+                        endDate: info.event.end ? info.event.end.toISOString() : null
+                    })
+                }).then(res => res.ok ? location.reload() : alert("Etkinlik güncellenemedi."));
+            },
+                eventDidMount: function (info) {
+        let tooltipHtml = "<div>";
+
+        if (info.event.extendedProps.description) {
+            tooltipHtml += `<div>📝 <strong>Açıklama:</strong> ${info.event.extendedProps.description}</div>`;
+        }
+
+        if (info.event.extendedProps.location) {
+            tooltipHtml += `<div>📍 <strong>Konum:</strong> ${info.event.extendedProps.location}</div>`;
+        }
+
+        if (info.event.extendedProps.tags && info.event.extendedProps.tags.length > 0) {
+            tooltipHtml += `<div>🏷️ <strong>Etiketler:</strong> ${info.event.extendedProps.tags.join(', ')}</div>`;
+        }
+
+        tooltipHtml += "</div>";
+
+        $(info.el).tooltip({
+            title: tooltipHtml,
+            html: true, // ✨ HTML içerik için aktif
+            placement: 'top',
+            trigger: 'hover',
+            container: 'body'
+        });
+    }
+
+        });
+        calendar.render();
+    });
+
+</script>
+
+<style>
+    #calendar {
+        background: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        min-height: 600px;
+    }
+
+    body.dark-mode #calendar {
+        background: #2b2b2b;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .fc .fc-toolbar-title,
+    body.dark-mode .fc-daygrid-day-number,
+    body.dark-mode .fc-event {
+        color: #e0e0e0 !important;
+    }
+
+    body.dark-mode .fc-daygrid-day {
+        background-color: #1f1f1f !important;
+    }
+
+    body.dark-mode .fc-scrollgrid,
+    body.dark-mode .fc-daygrid-day-frame {
+        border-color: #444 !important;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+            $('#aiPromptForm').submit(function (e) {
+        e.preventDefault();
+        const prompt = $(this).find('textarea[name="prompt"]').val();
+
+        $.ajax({
+            url: '/Calendar/AskAI',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ prompt: prompt }),
+            success: function (response) {
+                const data = response.parsed;
+
+                $('#aiTitle').text(data.title);
+                $('#aiDate').text(data.date);
+                $('#aiTime').text(data.time);
+                $('#aiDescription').text(data.description);
+                $('#aiCategory').text(data.category);
+
+                // Form inputlarına değerleri ata
+                $('#confirmAIForm input[name="title"]').val(data.title);
+                $('#confirmAIForm input[name="date"]').val(data.date);
+                $('#confirmAIForm input[name="time"]').val(data.time);
+                $('#confirmAIForm input[name="description"]').val(data.description);
+                $('#aiCategoryInput').val(data.category); // düzenlenebilir kategori
+
+                $('#aiEventModal').modal('show');
+            },
+            error: function () {
+                alert("AI cevabı alınamadı.");
+            }
+        });
+    });
+
+
+        // Modal içindeki form submit işlemi
+        $('#confirmAIForm').submit(function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+
+            $.post('/Calendar/ConfirmAIEvent', formData, function () {
+                $('#aiEventModal').modal('hide');
+                alert("Etkinlik başarıyla eklendi.");
+                location.reload();
+            }).fail(function () {
+                alert("Etkinlik eklenirken hata oluştu.");
+            });
+        });
+    });
+</script>
+
+<!--<button class="btn btn-info my-3" id="loadAiChart">AI + Grafik Özeti</button>-->
+<div id="aiSummary" class="alert alert-info d-none mt-3"></div>
+<canvas id="eventChart" height="100" class="mt-4"></canvas>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    $('#loadAiChart').click(function () {
+        $.get('/Calendar/WeeklySummaryWithChart', function (data) {
+            $('#aiSummary').html(data.aiSummary).removeClass('d-none');
+
+            const ctx = document.getElementById('eventChart').getContext('2d');
+
+            // Günleri sıraya koy
+            const orderedDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            const chartLabels = orderedDays.map(day => day);
+            const chartValues = orderedDays.map(day => data.chartData[day] || 0);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Etkinlik Sayısı',
+                        data: chartValues,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        });
+    });
+
+        $("#loadWeeklyPlan").click(function () {
+        $("#aiPlan").removeClass("d-none").html("⏳ AI planlama yapıyor...");
+
+        $.get("/AI/WeeklyPlanSuggestion", function (data) {
+            $("#aiPlan").html(`<h5>🧠 AI Önerisi:</h5><p>${data.summary}</p>`);
+        }).fail(function () {
+            $("#aiPlan").html("<div class='alert alert-danger'>AI plan önerisi alınamadı.</div>");
+        });
+    });
+
+</script>
+
+

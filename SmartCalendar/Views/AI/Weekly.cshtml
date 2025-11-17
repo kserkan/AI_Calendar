@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Etkinlik Çıkarıcı";
+}
+
+<h2>📅 Doğal Dilden Etkinlik Oluştur</h2>
+
+<form asp-controller="EventParser" asp-action="Parse" method="post">
+    <div class="form-group">
+        <label for="sentence">Etkinlik cümlesi:</label>
+        <textarea name="sentence" class="form-control" rows="3" required>@ViewBag.Input</textarea>
+    </div>
+    <button type="submit" class="btn btn-success mt-2">Etkinliği Çözümle</button>
+</form>
+
+@if (ViewBag.ParsedJson != null)
+{
+    <hr />
+    <h4>🎯 Çözümleme:</h4>
+    <pre>@ViewBag.ParsedJson.ToString()</pre>
+}
+else if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+    <pre>@ViewBag.Raw</pre>
+}
