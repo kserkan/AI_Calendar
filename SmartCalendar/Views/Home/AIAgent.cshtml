@@ -1,0 +1,211 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Calendar AI Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    .bg-gradient-primary-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .text-gradient {
+        background: -webkit-linear-gradient(#667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        transition: all 0.3s ease;
+    }
+
+    .analysis-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+    }
+</style>
+
+<input type="hidden" id="currentUserId" value="@currentUserId" />
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar-check-fill text-primary me-2"></i>Calendar AI</h2>
+            <p class="text-muted small mb-0">Kişisel Asistanınız</p>
+        </div>
+        <button class="btn btn-outline-primary rounded-pill px-4 fw-bold" onclick="openAnalysisModal()">
+            <i class="bi bi-pie-chart-fill me-2"></i>Haftalık Analiz
+        </button>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <div class="card shadow-lg border-0 mb-5" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header bg-white p-4 border-0">
+                    <h5 class="fw-bold text-dark mb-0">Hızlı Planlama</h5>
+                </div>
+                <div class="card-body p-4 pt-0">
+                    <form id="aiForm">
+                        <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+                            <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-magic text-primary"></i></span>
+                            <input type="text" id="aiQueryInput" class="form-control border-0 ps-2" placeholder="Örn: Yarın akşam 8'de halı saha maçı ayarla..." required>
+                            <button class="btn btn-primary px-4" type="submit" style="background: #667eea; border:none;"><i class="bi bi-arrow-right fs-5"></i></button>
+                        </div>
+                    </form>
+
+                    <div id="aiLoading" class="text-center d-none mt-4 py-3">
+                        <div class="spinner-grow text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                        <p class="mt-3 text-muted fw-medium">Calendar AI geçmişinizi analiz ediyor...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="aiResultContainer"></div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header bg-gradient-primary-custom text-white p-4 border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-activity me-2"></i>Haftalık Rapor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="anlLoading" class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Veriler inceleniyor...</p></div>
+                <div id="anlContent" style="display:none;">
+                    <div class="card border-0 shadow-sm mb-4"><div class="card-body"><h6 class="text-primary fw-bold mb-2">ÖZET</h6><p class="mb-0 text-dark" id="anlSummary"></p></div></div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-3"><h6 class="text-danger fw-bold"><i class="bi bi-calendar-x me-2"></i>Yoğun Günler</h6><div id="anlBusyDays" class="d-flex flex-wrap gap-2 mt-2"></div></div></div>
+                        <div class="col-md-6"><div class="card h-100 border-0 shadow-sm p-3"><h6 class="text-success fw-bold"><i class="bi bi-lightbulb me-2"></i>Tavsiye</h6><p class="small text-muted mt-2 mb-0" id="anlSuggestion"></p></div></div>
+                    </div>
+                    <h6 class="fw-bold px-2">ALIŞKANLIKLAR</h6><ul class="list-group shadow-sm border-0 rounded-3" id="anlHabits"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/tr.min.js"></script>
+
+    <script>
+        let suggestedEventData = null;
+
+        $(function () {
+             $("#aiForm").on("submit", function (e) {
+                 e.preventDefault();
+                 var q = $("#aiQueryInput").val().trim(); if (!q) return;
+                 $("#aiLoading").removeClass("d-none"); $("#aiResultContainer").html("").hide();
+                 $.ajax({
+                     type: "POST", url: "/AI/GetSuggestion", contentType: "application/json", data: JSON.stringify({ Query: q }),
+                     success: function (res) {
+                         $("#aiLoading").addClass("d-none");
+                         if (res.success) {
+                             var d = res.suggestion;
+                             if (typeof d === 'string') { try { d = JSON.parse(d); } catch { renderMsg(d); return; } }
+                             renderCards(d);
+                         } else renderMsg("Hata: " + res.message);
+                     },
+                     error: function () { $("#aiLoading").addClass("d-none"); renderMsg("Bağlantı hatası."); }
+                 });
+             });
+         });
+
+        function renderCards(data) {
+            suggestedEventData = data;
+            moment.locale('tr');
+            var dateStr = moment(data.startDate).format("DD MMMM YYYY, HH:mm");
+
+            // 1. ANALİZ KUTUSU (ÜSTTE)
+            var analysisHtml = '';
+            var refsHtml = '';
+            if (data.referenceEvents && data.referenceEvents.length > 0) {
+                refsHtml = '<div class="mt-3 pt-3 border-top border-secondary border-opacity-10"><small class="fw-bold text-muted d-block mb-2" style="font-size:0.7rem;">REFERANS ALINAN KAYITLAR</small>';
+                data.referenceEvents.forEach(i => refsHtml += `<div class="text-muted small mb-1"><i class="bi bi-clock-history me-2"></i>${i}</div>`);
+                refsHtml += '</div>';
+            }
+
+            if (data.analysisNote || refsHtml) {
+                analysisHtml = `
+                    <div class="card border-0 shadow-sm mb-4 analysis-box">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3"><i class="bi bi-graph-up-arrow text-primary fs-5"></i></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold text-primary mb-2">Calendar AI Analizi</h6>
+                                    <p class="text-dark small mb-0" style="line-height:1.5">${data.analysisNote || ''}</p>
+                                    ${refsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            // 2. ETKİNLİK KARTI (ALTTA)
+            var eventHtml = `
+                <div class="card border-0 shadow-sm animate__animated animate__fadeInUp" style="border-radius: 15px;">
+                    <div class="card-body p-0">
+                        <div class="p-4 pb-0">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-25">ONAY BEKLİYOR</span>
+                            </div>
+                            <h3 class="fw-bold mb-2 text-dark">${data.title}</h3>
+                            <p class="text-muted mb-4">${data.description || 'Açıklama yok.'}</p>
+                        </div>
+
+                        <div class="bg-light p-4 border-top border-bottom">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-white p-2 rounded shadow-sm me-3"><i class="bi bi-calendar-event text-primary fs-5"></i></div>
+                                <div><small class="text-muted d-block" style="font-size:0.75rem">TARİH & SAAT</small><span class="fw-bold text-dark">${dateStr}</span></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white p-2 rounded shadow-sm me-3"><i class="bi bi-geo-alt text-danger fs-5"></i></div>
+                                <div><small class="text-muted d-block" style="font-size:0.75rem">KONUM</small><span class="fw-bold text-dark">${data.location || 'Konum yok'}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="p-4">
+                            <button onclick="saveAiEvent()" class="btn btn-success w-100 py-3 fw-bold rounded-3 shadow-sm" style="background-color: #198754;">
+                                <i class="bi bi-check-circle-fill me-2"></i>Onayla ve Takvime Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            $("#aiResultContainer").html(analysisHtml + eventHtml).hide().fadeIn();
+        }
+
+        function openAnalysisModal() {
+            new bootstrap.Modal(document.getElementById('analysisModal')).show();
+            $("#anlLoading").removeClass("d-none"); $("#anlContent").hide();
+            $.ajax({ type: "POST", url: "/AI/GetWeeklyAnalysis", success: function (res) {
+                if (res.success) {
+                    var d = res.analysis;
+                    $("#anlSummary").text(d.summary); $("#anlSuggestion").text(d.suggestion);
+                    var days = ""; d.busyDays.forEach(x => days += `<span class="badge bg-danger bg-opacity-75 p-2 me-1">${x}</span>`); $("#anlBusyDays").html(days);
+                    var habits = ""; d.habits.forEach(x => habits += `<li class="list-group-item border-0 border-bottom"><i class="bi bi-check-circle-fill text-success me-2"></i>${x}</li>`); $("#anlHabits").html(habits);
+                    $("#anlLoading").addClass("d-none"); $("#anlContent").fadeIn();
+                }
+            }});
+        }
+
+        function renderMsg(msg) { $("#aiResultContainer").html(`<div class="alert alert-warning border-0 shadow-sm">${msg}</div>`).fadeIn(); }
+        function saveAiEvent() {
+            if (!suggestedEventData) return;
+            var start = moment(suggestedEventData.startDate);
+            var payload = { Title: suggestedEventData.title, Description: suggestedEventData.description, Location: suggestedEventData.location, StartDate: start.format("YYYY-MM-DDTHH:mm:ss"), EndDate: start.add(suggestedEventData.durationMinutes || 60, 'minutes').format("YYYY-MM-DDTHH:mm:ss"), UserId: $("#currentUserId").val() };
+            var btn = $("button[onclick='saveAiEvent()']"); btn.prop("disabled", true).html('Kaydediliyor...');
+            $.ajax({ type: "POST", url: "/Calendar/Api/AddEvent", contentType: "application/json", data: JSON.stringify(payload), success: function (res) { if(res.success) window.location.href = "/Calendar/Index"; else { alert("Hata"); btn.prop("disabled", false).text("Tekrar Dene"); } } });
+        }
+    </script>
+}

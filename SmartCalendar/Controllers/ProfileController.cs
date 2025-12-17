@@ -112,4 +112,70 @@ public class ProfileController : Controller
 
         return View(user);
     }
+
+
+    // ============================================================
+    // 📱 MOBİL API METODLARI (YENİ EKLENDİ)
+    // ============================================================
+
+    // API: GET /Profile/Api/GetProfile?userId=...
+    [AllowAnonymous]
+    [HttpGet("Api/GetProfile")]
+    public async Task<IActionResult> ApiGetProfile(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+            return Json(new { success = false, message = "User ID gerekli." });
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Json(new { success = false, message = "Kullanıcı bulunamadı." });
+
+        return Json(new
+        {
+            success = true,
+            user = new
+            {
+                fullName = user.FullName,
+                email = user.Email,
+                receiveReminders = user.ReceiveReminders
+            }
+        });
+    }
+
+    // API: POST /Profile/Api/UpdateProfile
+    // Mobilden isim güncelleme vs. için kullanılabilir
+    [AllowAnonymous]
+    [HttpPost("Api/UpdateProfile")]
+    public async Task<IActionResult> ApiUpdateProfile([FromBody] MobileProfileUpdateDto model)
+    {
+        if (string.IsNullOrEmpty(model.UserId))
+            return Json(new { success = false, message = "User ID gerekli." });
+
+        var user = await _userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+            return Json(new { success = false, message = "Kullanıcı bulunamadı." });
+
+        user.FullName = model.FullName;
+        // İstersen email güncellemesini de buraya ekleyebilirsin
+        // user.Email = model.Email; 
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = "Profil güncellendi." });
+        }
+
+        return Json(new { success = false, message = "Güncelleme başarısız." });
+    }
 }
+
+// Mobilden gelen veri için basit bir DTO sınıfı (Dosyanın en altına veya Dtos klasörüne ekleyebilirsin)
+public class MobileProfileUpdateDto
+{
+    public string UserId { get; set; }
+    public string FullName { get; set; }
+    public string Email { get; set; }
+}
+
+

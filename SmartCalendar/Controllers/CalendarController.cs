@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using SmartCalendar.Models.ViewModels;
 using Newtonsoft.Json;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 public class DeleteEventRequest
 {
@@ -86,6 +87,13 @@ public class CalendarController : Controller
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         int pageSize = 5; // her sayfada 5 etkinlik
+
+        // 👇 BU LOGLARI EKLE (AJANLAR)
+        Console.WriteLine("--------------------------------------------------");
+        Console.WriteLine("🌐 WEB TAKVİMİ AÇILDI!");
+        Console.WriteLine($"👤 Giriş Yapan Web Kullanıcısı ID: '{userId}'");
+        Console.WriteLine("--------------------------------------------------");
+
 
         var eventsQuery = _context.Events
             .Include(e => e.Tags)
@@ -195,16 +203,21 @@ public class CalendarController : Controller
     // API: GET /Calendar/Api/GetEvents
     [AllowAnonymous]
     [HttpGet("Api/GetEvents")]
-    public async Task<IActionResult> ApiGetEvents(string tag)
+    public async Task<IActionResult> ApiGetEvents(string userId, string tag) // 👈 Parametreye userId ekledik
     {
         try
         {
-            // Mock user ID for testing - gerçek uygulamada token'dan alınacak
-            var userId = "bbc1f2ef-bf06-496a-9d08-64c15a028fa1"; // Test user ID
-            
+            // 🛑 HATALI KOD SİLİNDİ: var userId = "bbc1...";
+
+            // ✅ DÜZELTME: Parametre olarak gelen userId'ye göre filtrele
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { error = "UserId parametresi zorunludur." });
+            }
+
             var eventsQuery = _context.Events
                 .Include(e => e.Tags)
-                .Where(e => e.UserId == userId);
+                .Where(e => e.UserId == userId); // 🔥 Gelen ID'ye göre ara
 
             if (!string.IsNullOrEmpty(tag))
             {
@@ -234,15 +247,29 @@ public class CalendarController : Controller
     }
 
     // API: POST /Calendar/Api/AddEvent
+    // API: POST /Calendar/Api/AddEvent
     [AllowAnonymous]
     [HttpPost("Api/AddEvent")]
     public async Task<IActionResult> ApiAddEvent([FromBody] SmartCalendar.Models.Dtos.EventDto model)
     {
+        Console.WriteLine("--------------------------------------------------");
+        Console.WriteLine($"🔍 EKLEME İSTEĞİ GELDİ!");
+        Console.WriteLine($"📦 Gelen Başlık: {model.Title}");
+
+        // DİKKAT: Mobilden "UserId" isminde geliyor, DTO'da bu property olmalı.
+        // Eğer model.UserId hata veriyorsa, EventDto sınıfına 'public string UserId { get; set; }' ekle.
+        Console.WriteLine($"👤 Gelen UserId: '{model.UserId}'");
+
         try
         {
-            // Mock user ID for testing - gerçek uygulamada token'dan alınacak
-            var userId = "bbc1f2ef-bf06-496a-9d08-64c15a028fa1"; // Test user ID
-            
+            // 🛑 SİLİNEN SATIR: var userId = "bbc1..."; (ARTIK BU YOK!)
+
+            // Mobilden gelen ID'yi kontrol et
+            if (string.IsNullOrEmpty(model.UserId) || model.UserId == "0")
+            {
+                return Json(new { success = false, message = "UserId boş veya hatalı geldi!" });
+            }
+
             var newEvent = new Event
             {
                 Title = model.Title,
@@ -252,7 +279,7 @@ public class CalendarController : Controller
                 Location = model.Location,
                 ReminderMinutesBefore = model.ReminderMinutesBefore,
                 ReminderSent = false,
-                UserId = userId,
+                UserId = model.UserId, // 🔥 ARTIK SABİT DEĞİL, MOBİLDEN GELEN DEĞER!
                 Tags = new List<Tag>()
             };
 
@@ -649,7 +676,6 @@ public class CalendarController : Controller
         return RedirectToAction("Index");
     }
 
-
-
+  
 
 }

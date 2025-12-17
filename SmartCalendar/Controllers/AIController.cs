@@ -1,332 +1,117 @@
-﻿// DOSYA: AIController.cs
-// (Mevcut dosyanın içeriğini bununla değiştirin)
-
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System.Globalization;
-using System.Security.Claims;
-using System.Text;
-using SmartCalendar;
+using SmartCalendar.Seed;
 using SmartCalendar.Models;
-using SmartCalendar.Services;
-using SmartCalendar.Models.Dtos;
-using System.Text.Json; // <-- YENİ (AIService'den JsonElement almak için)
+using System.Text;
+using System.Text.Json;
+using System.Security.Claims;
 
 namespace SmartCalendar.Controllers
 {
-    // === DTO (Veri Taşıma Nesneleri) ===
-    public class PromptRequest
-    {
-        public string Prompt { get; set; }
-    }
-    public class RecommendationEventModel
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string SuggestedDate { get; set; }
-        public string SuggestedTime { get; set; }
-        public string Category { get; set; }
-        public string Location { get; set; }
-        public double DurationHours { get; set; }
-    }
-    public class WeeklyAnalysisPatterns
-    {
-        public int TotalEvents { get; set; }
-        public string FavoriteCategory { get; set; }
-    }
-
-    // === AI KÖPRÜ KONTROLÖRÜ ===
-
-    [Authorize]
-    [Route("ai")]
     public class AIController : Controller
     {
-        private readonly AIService _aiService;
         private readonly ApplicationDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ILogger<AIController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public AIController(
-            AIService aiService,
-            ApplicationDbContext context,
-            IHttpClientFactory httpClientFactory,
-            ILogger<AIController> logger)
+        public AIController(ApplicationDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _aiService = aiService;
             _context = context;
             _httpClientFactory = httpClientFactory;
-            _logger = logger;
+            _configuration = configuration;
         }
 
-        /// <summary>
-        /// (DÜZELTİLDİ) Index.cshtml'nin beklediği AI önerilerini yükler.
-        /// Artık AIService'den gelen tam JSON'u doğrudan arayüze iletir.
-        /// </summary>
-        [HttpGet("smart-recommendations")]
-        public async Task<IActionResult> SmartRecommendations()
+        public class AiQueryModel { public string Query { get; set; } }
+
+        // --- 1. ETKİNLİK ÖNERİSİ ---
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> GetSuggestion([FromBody] AiQueryModel model)
         {
+            if (model == null || string.IsNullOrWhiteSpace(model.Query)) return BadRequest(new { success = false, message = "Sorgu boş." });
+
+            var apiKey = _configuration["Gemini:ApiKey"];
+            var geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
 
-            var events = await _context.Events
-                .Where(e => e.UserId == userId)
-                .OrderByDescending(e => e.StartDate)
-                .Take(10)
-                .Include(e => e.Tags)
-                .ToListAsync();
+            var historyData = await GetHistoryText(userId, 50);
 
-            var eventDtos = events.Select(e => new Models.EventDto
-            {
-                Day = e.StartDate.ToString("dddd", new CultureInfo("tr-TR")),
-                Time = e.StartDate.ToString("HH:mm"),
-                Title = e.Title,
-                Tags = e.Tags?.Select(t => t.Name).ToList() ?? new List<string>(),
-                Location = e.Location ?? string.Empty
-            }).ToList();
+            var systemPrompt = $@"
+            Sen 'Calendar AI' adında akıllı bir takvim asistanısın. Şu an: {DateTime.Now:yyyy-MM-dd HH:mm dddd}.
+            
+            GÖREV: Kullanıcı isteğini geçmiş verilere göre analiz et ve en uygun planı oluştur.
+            
+            KURALLAR:
+            1. Tarih/Saat belirtilmediyse geçmiş alışkanlıklara (Day/Time pattern) bakarak tahmin et.
+            2. 'analysisNote' alanına, neden bu tarihi veya saati seçtiğini nazikçe açıkla.
+            3. Karar vermende etkili olan 1-3 eski etkinliği 'referenceEvents' listesine ekle.
 
-            // DEĞİŞİKLİK: AIService'den artık 'string' değil, 'JsonElement' geliyor
-            var aiJsonResponse = await _aiService.GetEventRecommendationAsync(eventDtos);
+            GEÇMİŞ VERİLER:
+            {historyData}
 
-            // DEĞİŞİKLİK: "success = false" zorlaması kaldırıldı.
-            // Python'dan (app.py) gelen JSON (başarılı veya hatalı)
-            // doğrudan Index.cshtml'e (JavaScript) iletiliyor.
-            return Json(aiJsonResponse);
+            JSON ÇIKTISI:
+            {{
+                ""title"": ""Başlık"", ""description"": ""Açıklama"", ""location"": ""Konum"",
+                ""startDate"": ""YYYY-MM-DDTHH:mm:ss"", ""durationMinutes"": 60,
+                ""analysisNote"": ""Analiz nedeni..."",
+                ""referenceEvents"": [ ""Örn: Halı Saha (Salı 22:00)"" ]
+            }}";
+
+            return await CallGemini(geminiUrl, systemPrompt, model.Query);
         }
 
-        /// <summary>
-        /// (DÜZELTİLDİ) AI öneri kartındaki "Takvime Ekle" butonu için.
-        /// </summary>
-        [HttpPost("create-from-recommendation")]
-        public async Task<IActionResult> CreateFromRecommendation([FromBody] RecommendationEventModel model)
-        {
-            _logger.LogInformation("📥 Öneriden etkinlik oluşturuluyor: {Title}", model.Title);
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            if (!DateTime.TryParse($"{model.SuggestedDate} {model.SuggestedTime}", out var startDate))
-            {
-                _logger.LogError("❌ Geçersiz tarih formatı: {Date} {Time}", model.SuggestedDate, model.SuggestedTime);
-                return BadRequest(new { success = false, message = "AI geçerli bir tarih döndürmedi." });
-            }
-
-            try
-            {
-                var newEvent = new Event
-                {
-                    Title = model.Title,
-                    Description = model.Description,
-                    StartDate = startDate,
-                    EndDate = startDate.AddHours(model.DurationHours > 0 ? model.DurationHours : 1),
-                    UserId = userId,
-                    Location = model.Location ?? "",
-                    ReminderMinutesBefore = 10,
-                    ReminderSent = false
-                };
-
-                var tagName = model.Category;
-                if (!string.IsNullOrWhiteSpace(tagName))
-                {
-                    var tag = await _context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
-                    if (tag == null)
-                    {
-                        tag = new Tag { Name = tagName };
-                        _context.Tags.Add(tag);
-                    }
-                    newEvent.Tags = new List<Tag> { tag };
-                }
-
-                _context.Events.Add(newEvent);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("✅ Öneriden etkinlik başarıyla oluşturuldu: {Title}", newEvent.Title);
-                return Ok(new { success = true, message = "Etkinlik oluşturuldu.", eventId = newEvent.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Öneriden etkinlik oluşturulurken hata oluştu.");
-                return StatusCode(500, new { success = false, message = "Etkinlik oluşturulurken sunucu hatası." });
-            }
-        }
-
-        /// <summary>
-        /// (YENİ) Index.cshtml'deki "Doğal Dil ile Hızlı Ekleme" kutusu için.
-        /// </summary>
-        [HttpPost("parse-and-create")]
-        public async Task<IActionResult> ParseAndCreate([FromBody] PromptRequest req)
-        {
-            _logger.LogInformation("📥 Doğal dil ile hızlı ekleme: {Prompt}", req.Prompt);
-
-            var client = _httpClientFactory.CreateClient();
-            var content = new StringContent(
-                JsonConvert.SerializeObject(new { prompt = req.Prompt }),
-                Encoding.UTF8, "application/json");
-
-            HttpResponseMessage response;
-            try
-            {
-                response = await client.PostAsync("http://localhost:5001/api/parse-event", content);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Flask servisine (parse-event) bağlanılamadı.");
-                return StatusCode(500, new { success = false, message = "AI servisine bağlanılamadı." });
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Flask /api/parse-event hatası: {StatusCode} - {Content}", response.StatusCode, errorContent);
-                return BadRequest(new { success = false, message = "AI'dan geçerli JSON alınamadı." });
-            }
-
-            var result = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("📤 Flask JSON (parse-event): {Result}", result);
-
-            dynamic parsed;
-            try
-            {
-                parsed = JsonConvert.DeserializeObject(result);
-            }
-            catch (System.Text.Json.JsonException ex)
-            {
-                _logger.LogError(ex, "❌ JSON parse hatası.");
-                return BadRequest(new { success = false, message = "AI JSON formatı geçersiz." });
-            }
-
-            dynamic eventData = parsed?.parsed;
-            if (eventData == null || string.IsNullOrWhiteSpace((string)eventData.title))
-                return BadRequest(new { success = false, message = "AI geçerli bir etkinlik döndürmedi." });
-
-            if (!DateTime.TryParse($"{eventData.date} {eventData.time}", out var startDate))
-                return BadRequest(new { success = false, message = "AI geçerli bir tarih döndürmedi." });
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            try
-            {
-                var newEvent = new Event
-                {
-                    Title = eventData.title,
-                    Description = eventData.description,
-                    StartDate = startDate,
-                    EndDate = startDate.AddHours(1),
-                    UserId = userId,
-                    Location = eventData.location,
-                    ReminderMinutesBefore = 10,
-                    ReminderSent = false
-                };
-
-                var tagName = (string)eventData.category;
-                if (!string.IsNullOrWhiteSpace(tagName))
-                {
-                    var tag = await _context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
-                    if (tag == null)
-                    {
-                        tag = new Tag { Name = tagName };
-                        _context.Tags.Add(tag);
-                    }
-                    newEvent.Tags = new List<Tag> { tag };
-                }
-
-                _context.Events.Add(newEvent);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("✅ Hızlı ekleme ile etkinlik oluşturuldu: {Title}", newEvent.Title);
-                return Ok(new { success = true, message = "Etkinlik oluşturuldu.", eventId = newEvent.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Hızlı ekleme etkinliği oluşturulurken hata oluştu.");
-                return StatusCode(500, new { success = false, message = "Etkinlik veritabanına kaydedilirken hata oluştu." });
-            }
-        }
-
-
-        /// <summary>
-        /// (YENİ) Index.cshtml'deki "Haftalık Analiz" butonu için.
-        /// </summary>
-        [HttpGet("weekly-analysis")]
+        // --- 2. HAFTALIK ANALİZ ---
+        [HttpPost]
+        [Route("AI/GetWeeklyAnalysis")]
         public async Task<IActionResult> GetWeeklyAnalysis()
         {
+            var apiKey = _configuration["Gemini:ApiKey"];
+            var geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var today = DateTime.Today;
-            var startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-            var endOfWeek = startOfWeek.AddDays(7);
 
-            var events = await _context.Events
-                .Where(e => e.UserId == userId && e.StartDate >= startOfWeek && e.StartDate < endOfWeek)
-                .Include(e => e.Tags)
-                .OrderBy(e => e.StartDate)
-                .ToListAsync();
+            var historyData = await GetHistoryText(userId, 100);
 
-            if (!events.Any())
-            {
-                return Json(new { success = true, analysis = "Bu hafta için planlanmış bir etkinliğiniz bulunmuyor. AI analizi için lütfen etkinlik ekleyin.", patterns = (object)null });
-            }
+            var systemPrompt = $@"
+            Sen 'Calendar AI' Yaşam Koçusun. Geçmiş etkinlikleri incele.
 
-            var eventSummary = string.Join("\n", events.Select(e =>
-                $"- {e.StartDate:dddd HH:mm}: {e.Title} (Kategori: {e.Tags.FirstOrDefault()?.Name ?? "Genel"})"
-            ));
+            VERİ:
+            {historyData}
 
-            var prompt = $@"
-Kullanıcının bu haftaki etkinlikleri aşağıdadır.
-Bu verilere dayanarak kısa, samimi bir haftalık analiz yap ve 2-3 cümlelik bir verimlilik ipucu ver.
-JSON veya markdown KULLANMA. Sadece düz metin olarak cevap ver.
+            JSON ÇIKTISI:
+            {{
+                ""summary"": ""Genel özet..."",
+                ""busyDays"": [""Pazartesi"", ""Cuma""],
+                ""habits"": [""Sporlarını akşam yapıyorsun"", ""Sabahları toplantın oluyor""],
+                ""suggestion"": ""Koç tavsiyesi.""
+            }}";
 
-Etkinlikler:
-{eventSummary}
+            return await CallGemini(geminiUrl, systemPrompt, "Haftalık analizimi yap", true);
+        }
 
-Analiz:
-";
+        // --- YARDIMCI METOTLAR ---
+        private async Task<string> GetHistoryText(string userId, int count)
+        {
+            if (string.IsNullOrEmpty(userId)) return "";
+            var events = await _context.Events.Where(e => e.UserId == userId).OrderByDescending(e => e.StartDate).Take(count)
+                .Select(e => new { e.Title, Day = e.StartDate.DayOfWeek.ToString(), Time = e.StartDate.ToString("HH:mm"), Date = e.StartDate.ToString("dd.MM.yyyy") }).ToListAsync();
+            var sb = new StringBuilder();
+            foreach (var e in events) sb.AppendLine($"- {e.Title} ({e.Day} {e.Time}) [{e.Date}]");
+            return sb.ToString();
+        }
 
-            var client = _httpClientFactory.CreateClient();
-            var content = new StringContent(
-                JsonConvert.SerializeObject(new { prompt = prompt }),
-                Encoding.UTF8, "application/json");
-
-            HttpResponseMessage response;
+        private async Task<IActionResult> CallGemini(string url, string sysPrompt, string userPrompt, bool isAnalysis = false)
+        {
+            var requestBody = new { system_instruction = new { parts = new[] { new { text = sysPrompt } } }, contents = new[] { new { parts = new[] { new { text = userPrompt } } } }, generationConfig = new { responseMimeType = "application/json" } };
             try
             {
-                response = await client.PostAsync("http://localhost:5001/api/chat", content);
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json"));
+                if (!response.IsSuccessStatusCode) return BadRequest(new { success = false, message = "AI Servis Hatası" });
+                var text = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
+                var data = JsonSerializer.Deserialize<object>(text);
+                return Json(new { success = true, suggestion = isAnalysis ? null : data, analysis = isAnalysis ? data : null });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Flask servisine (weekly-analysis) bağlanılamadı.");
-                return StatusCode(500, new { success = false, message = "AI servisine bağlanılamadı." });
-            }
-
-            var result = await response.Content.ReadAsStringAsync();
-
-            dynamic parsed;
-            string aiAnalysis = "Analiz alınamadı.";
-            try
-            {
-                parsed = JsonConvert.DeserializeObject(result);
-                aiAnalysis = parsed?.response ?? "AI'dan metin alınamadı.";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Haftalık analiz JSON'u parse edilemedi.");
-            }
-
-            var patterns = new WeeklyAnalysisPatterns
-            {
-                TotalEvents = events.Count,
-                FavoriteCategory = events.SelectMany(e => e.Tags)
-                                        .GroupBy(t => t.Name)
-                                        .OrderByDescending(g => g.Count())
-                                        .FirstOrDefault()?.Key ?? "Genel"
-            };
-
-            return Json(new { success = true, analysis = aiAnalysis, patterns = patterns });
+            catch (Exception ex) { return StatusCode(500, new { success = false, message = ex.Message }); }
         }
     }
 }

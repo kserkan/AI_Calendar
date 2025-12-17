@@ -4,325 +4,22 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-lg border-0 ai-card">
-                <div class="card-header bg-gradient-ai text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-
-                        <h5 class="mb-0">
-                            <i class="fas fa-robot me-2"></i>
-                            Akıllı Etkinlik Önerileri
-                        </h5>
-
-                        <button class="btn btn-sm btn-light" onclick="refreshAIRecommendations()">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            Yenile
-
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="ai-profile p-3 bg-light border-bottom">
-
-                        <div class="row text-center" id="userPatterns">
-                            <div class="col-12 py-3">
-                                <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
-
-                                <span class="ms-2 text-muted">Aktivite desenleriniz analiz ediliyor...</span>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="p-3" id="aiRecommendationsContainer">
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="text-muted mt-2">AI önerileriniz hazırlanıyor...</p>
-
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-light border-top">
-                        <h6 class="mb-3">
-
-                            <i class="fas fa-comment-dots text-success me-2"></i>
-                            Doğal Dil ile Hızlı Ekleme
-                        </h6>
-                        <div class="input-group">
-                            <input type="text"
-                                   id="quickAddInput"
-                                   class="form-control"
-                                   placeholder="Örn: Yarın saat 14:00'te diş doktoru randevum var">
-                            <button class="btn btn-success" onclick="quickAddEvent()">
-
-                                <i class="fas fa-magic me-1"></i>
-                                Ekle
-                            </button>
-                        </div>
-
-                        <small class="text-muted d-block mt-2">
-                            <i class="fas fa-lightbulb me-1"></i>
-                            İpucu: "Pazartesi sabah 9'da toplantı" veya "15 Kasım akşam doğum günü"
-
-                        </small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <h2 class="mb-4">📊 Etkinlik Özeti Paneli</h2>
-    <div class="row mb-4">
-        <div class="col-md-4">
-
-            <div class="card text-white bg-info shadow-sm stat-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-
-                            <h5 class="card-title mb-1">Toplam Etkinlik</h5>
-                            <p class="card-text display-6 fw-bold mb-0">@Model.TotalEvents</p>
-                        </div>
-                        <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success shadow-sm stat-card">
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="card-title mb-1">Gelecek Etkinlikler</h5>
-                            <p class="card-text display-6 fw-bold mb-0">@Model.UpcomingEvents</p>
-
-                        </div>
-                        <i class="fas fa-clock fa-3x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-secondary shadow-sm stat-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-
-                            <h5 class="card-title mb-1">Geçmiş Etkinlikler</h5>
-                            <p class="card-text display-6 fw-bold mb-0">@Model.PastEvents</p>
-                        </div>
-
-                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm event-list-card">
-                <div class="card-header bg-primary text-white">
-                    <i class="far fa-calendar-check me-2"></i>
-                    Bugünün Etkinlikleri
-                </div>
-                <div class="card-body event-card-body">
-
-                    @if (Model.TodayEvents.Any())
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var ev in Model.TodayEvents)
-
-                            {
-                                <li class="list-group-item">
-                                    <strong>@ev.Title</strong><br />
-
-                                    <small class="text-muted">
-                                        <i class="far fa-clock me-1"></i>
-
-                                        @ev.StartDate.ToString("HH:mm")
-                                    </small>
-                                </li>
-
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-
-                        <div class="text-center py-4 text-muted">
-                            <i class="far fa-calendar-times fa-2x mb-2"></i>
-                            <p>Bugün için etkinlik yok.</p>
-
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm event-list-card">
-
-                <div class="card-header bg-warning text-dark">
-                    <i class="far fa-calendar-plus me-2"></i>
-                    Yarının Etkinlikleri
-                </div>
-                <div class="card-body event-card-body">
-
-                    @if (Model.TomorrowEvents.Any())
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var ev in Model.TomorrowEvents)
-
-                            {
-                                <li class="list-group-item">
-                                    <strong>@ev.Title</strong><br />
-
-                                    <small class="text-muted">
-                                        <i class="far fa-clock me-1"></i>
-
-                                        @ev.StartDate.ToString("HH:mm")
-                                    </small>
-                                </li>
-
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-
-                        <div class="text-center py-4 text-muted">
-                            <i class="far fa-calendar-times fa-2x mb-2"></i>
-                            <p>Yarın için etkinlik yok.</p>
-                        </div>
-
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm event-list-card">
-                <div class="card-header bg-success text-white">
-
-                    <i class="fas fa-calendar-week me-2"></i>
-                    Bu Haftanın Etkinlikleri
-                </div>
-                <div class="card-body event-card-body">
-                    @if (Model.ThisWeekEvents.Any())
-
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var ev in Model.ThisWeekEvents)
-
-                            {
-                                <li class="list-group-item">
-                                    <strong>@ev.Title</strong><br />
-
-                                    <small class="text-muted">
-                                        <i class="far fa-calendar me-1"></i>
-                                        @ev.StartDate.ToString("dddd, HH:mm", new System.Globalization.CultureInfo("tr-TR"))
-
-                                    </small>
-                                </li>
-                            }
-
-                        </ul>
-                    }
-                    else
-                    {
-
-                        <div class="text-center py-4 text-muted">
-                            <i class="far fa-calendar-times fa-2x mb-2"></i>
-                            <p>Bu hafta için etkinlik yok.</p>
-                        </div>
-
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="text-center mt-4 mb-5">
-    <a href="/Calendar" class="btn btn-primary btn-lg me-2">
-        <i class="fas fa-calendar-alt me-2"></i>
-        Takvime Git
-    </a>
-    <button class="btn btn-outline-primary btn-lg" data-bs-toggle="modal" data-bs-target="#allEventsModal" id="loadAllEventsBtn">
-
-        <i class="fas fa-list me-2"></i>
-        Tüm Etkinlikler
-    </button>
-    <button class="btn btn-outline-success btn-lg" onclick="getWeeklyAnalysis()">
-        <i class="fas fa-chart-line me-2"></i>
-        Haftalık Analiz
-    </button>
-</div>
-
-<div class="modal fade" id="allEventsModal" tabindex="-1" aria-labelledby="allEventsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-
-                <h5 class="modal-title" id="allEventsModalLabel">
-                    <i class="fas fa-list-ul me-2"></i>
-                    Tüm Etkinlikler
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-
-            </div>
-            <div class="modal-body" id="allEventsModalBody">
-                <div class="text-center my-4 text-muted">Yükleniyor...</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="weeklyAnalysisModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-
-                <h5 class="modal-title">
-                    <i class="fas fa-brain me-2"></i>
-                    AI Haftalık Analiz
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-
-            </div>
-            <div class="modal-body" id="weeklyAnalysisContent">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-success"></div>
-                    <p class="text-muted mt-2">Analiz ediliyor...</p>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
 <style>
-    /* AI Kart Gradient */
-    .bg-gradient-ai {
+    /* --- YENİ CALENDAR AI STİLLERİ --- */
+    .bg-gradient-primary-custom {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    .ai-card {
-        border-top: 4px solid #667eea;
-        transition: transform 0.2s;
+    .analysis-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+        border-radius: 12px;
     }
 
-        .ai-card:hover {
-            transform: translateY(-2px);
-        }
-
-    /* İstatistik Kartları */
+    /* İstatistik Kartları (Mevcut Tasarım Korundu) */
     .stat-card {
         transition: transform 0.2s, box-shadow 0.2s;
         border: none;
@@ -333,7 +30,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         }
 
-    /* Etkinlik Kartları */
+    /* Etkinlik Kartları (Mevcut Tasarım Korundu) */
     .event-list-card {
         transition: transform 0.2s;
         border-top: 3px solid;
@@ -358,394 +55,436 @@
             border-radius: 4px;
         }
 
-    /* AI Öneri Kartları */
-    .ai-recommendation-card {
-        border-left: 4px solid #667eea;
-        transition: all 0.3s ease;
-        cursor: pointer;
+    /* Input Alanı */
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #667eea;
     }
-
-        .ai-recommendation-card:hover {
-            background-color: #f8f9fa;
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-    .recommendation-reason {
-        background: #fff3cd;
-        border-left: 3px solid #ffc107;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-    }
-
-    .fade-in-up {
-        animation: fadeInUp 0.5s ease-out;
-    }
-
-    /* User Pattern Badges */
-    .pattern-stat {
-        background: white;
-        border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-        .pattern-stat h4 {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 0.25rem;
-        }
-
-        .pattern-stat p {
-            color: #6c757d;
-            font-size: 0.875rem;
-            margin: 0;
-        }
 </style>
 
-@section Scripts {
-    <script>
-               let currentRecommendations = [];
-               // Sayfa yüklendiğinde
-               $(document).ready(function() {
-                   loadAIRecommendations();
+<input type="hidden" id="currentUserId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
 
-                   // Enter tuşu ile hızlı ekleme
-                   $('#quickAddInput').keypress(function(e) {
-                       if (e.which === 13) {
-                           quickAddEvent();
+<div class="container mt-4 mb-5">
 
-                        }
-                   });
-               });
-               // AI Önerilerini Yükle
-               function loadAIRecommendations() {
-                   $('#aiRecommendationsContainer').html(`
-                       <div class="text-center py-4">
-                           <div class="spinner-border text-primary"></div>
-                           <p class="text-muted mt-2">AI önerileriniz hazırlanıyor...</p>
+    <div class="row mb-5 justify-content-center">
+        <div class="col-lg-10">
 
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold text-dark m-0"><i class="bi bi-stars text-primary me-2"></i>Calendar AI</h4>
+                <span class="badge bg-light text-primary border">Kişisel Asistan</span>
+            </div>
+
+            <div class="card shadow-lg border-0 mb-4" style="border-radius: 15px; overflow: hidden;">
+                <div class="card-body p-4">
+                    <form id="aiForm">
+                        <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+                            <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-magic text-primary"></i></span>
+                            <input type="text" id="aiQueryInput" class="form-control border-0 ps-2" placeholder="Örn: Yarın akşam 8'de halı saha maçı ayarla..." required>
+                            <button class="btn btn-primary px-4" type="submit" style="background: #667eea; border:none;"><i class="bi bi-arrow-right fs-5"></i></button>
+                        </div>
+                    </form>
+
+                    <div id="aiLoading" class="text-center d-none mt-4">
+                        <div class="spinner-grow text-primary" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
+                        <p class="mt-2 text-muted small fw-medium">Geçmiş verileriniz analiz ediliyor...</p>
                     </div>
-                   `);
-                   $.ajax({
-                       url: '/ai/smart-recommendations', // Bu adres artık AIController'da mevcut
-                       type: 'GET',
-                       success: function(response) {
-                           if (response.success && response.recommendations.length > 0) {
+                </div>
+            </div>
 
-                               currentRecommendations = response.recommendations;
-                               displayRecommendations(response.recommendations);
-                               displayUserPatterns(response.userPatterns);
-                           } else {
-                               $('#aiRecommendationsContainer').html(`
+            <div id="aiResultContainer"></div>
 
-                                    <div class="alert alert-info m-3">
-                                       <i class="fas fa-info-circle me-2"></i>
-                                       Yeterli etkinlik verisi yok veya öneri alınamadı.
+        </div>
+    </div>
 
-                                       Daha fazla etkinlik ekledikçe AI öğrenecek!
-                                   </div>
-                               `);
+    <h2 class="mb-4 h4"><i class="bi bi-bar-chart-fill me-2"></i>Etkinlik Özeti Paneli</h2>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-info shadow-sm stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Toplam Etkinlik</h5>
+                            <p class="card-text display-6 fw-bold mb-0">@Model.TotalEvents</p>
+                        </div>
+                        <i class="bi bi-calendar3 fa-3x opacity-50" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success shadow-sm stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Gelecek Etkinlikler</h5>
+                            <p class="card-text display-6 fw-bold mb-0">@Model.UpcomingEvents</p>
+                        </div>
+                        <i class="bi bi-clock-history fa-3x opacity-50" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-secondary shadow-sm stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1">Geçmiş Etkinlikler</h5>
+                            <p class="card-text display-6 fw-bold mb-0">@Model.PastEvents</p>
+                        </div>
+                        <i class="bi bi-check-circle fa-3x opacity-50" style="font-size: 3rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                           }
-                       },
-                       error: function() {
-                           $('#aiRecommendationsContainer').html(`
-                               <div class="alert alert-warning m-3">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm event-list-card" style="border-color: #0d6efd;">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-calendar-check me-2"></i> Bugünün Etkinlikleri
+                </div>
+                <div class="card-body event-card-body">
+                    @if (Model.TodayEvents.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var ev in Model.TodayEvents)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@ev.Title</strong><br />
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i>@ev.StartDate.ToString("HH:mm")</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted"><i class="bi bi-calendar-x fa-2x mb-2"></i><p>Bugün etkinlik yok.</p></div>
+                    }
+                </div>
+            </div>
+        </div>
 
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                   AI servisi şu anda kullanılamıyor.
-                                   Lütfen daha sonra tekrar deneyin.
-                               </div>
-                           `);
-                       }
-                   });
-               }
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm event-list-card" style="border-color: #ffc107;">
+                <div class="card-header bg-warning text-dark">
+                    <i class="bi bi-calendar-plus me-2"></i> Yarının Etkinlikleri
+                </div>
+                <div class="card-body event-card-body">
+                    @if (Model.TomorrowEvents.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var ev in Model.TomorrowEvents)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@ev.Title</strong><br />
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i>@ev.StartDate.ToString("HH:mm")</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted"><i class="bi bi-calendar-x fa-2x mb-2"></i><p>Yarın etkinlik yok.</p></div>
+                    }
+                </div>
+            </div>
+        </div>
 
-               // Önerileri Göster
-               function displayRecommendations(recommendations) {
-                   let html = '<div class="row g-3">';
-                   recommendations.forEach((rec, index) => {
-                       html += `
-                           <div class="col-12">
-                               <div class="card ai-recommendation-card border-0 shadow-sm fade-in-up"
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm event-list-card" style="border-color: #198754;">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-calendar-week me-2"></i> Bu Haftanın Etkinlikleri
+                </div>
+                <div class="card-body event-card-body">
+                    @if (Model.ThisWeekEvents.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var ev in Model.ThisWeekEvents)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@ev.Title</strong><br />
+                                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>@ev.StartDate.ToString("dddd, HH:mm", new System.Globalization.CultureInfo("tr-TR"))</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted"><i class="bi bi-calendar-x fa-2x mb-2"></i><p>Bu hafta etkinlik yok.</p></div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                    style="animation-delay: ${index * 0.1}s">
-                                   <div class="card-body">
-                                       <div class="d-flex justify-content-between align-items-start mb-2">
+<div class="text-center mt-4 mb-5">
+    <a href="/Calendar" class="btn btn-primary btn-lg me-2 rounded-pill px-4">
+        <i class="bi bi-calendar3 me-2"></i> Takvime Git
+    </a>
+    <button class="btn btn-outline-primary btn-lg rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#allEventsModal" id="loadAllEventsBtn">
+        <i class="bi bi-list-ul me-2"></i> Tüm Etkinlikler
+    </button>
+    <button class="btn btn-outline-success btn-lg rounded-pill px-4" onclick="openAnalysisModal()">
+        <i class="bi bi-graph-up me-2"></i> Haftalık Analiz
+    </button>
+</div>
 
-                                           <h6 class="mb-0">
-                                               <i class="fas fa-star text-warning me-2"></i>
-                                               ${rec.title}
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header bg-gradient-primary-custom text-white p-4 border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-activity me-2"></i>Haftalık Rapor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="anlLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2 text-muted">Geçmiş verileriniz inceleniyor...</p>
+                </div>
+                <div id="anlContent" style="display:none;">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <h6 class="text-primary fw-bold mb-2">ÖZET</h6>
+                            <p class="mb-0 text-dark" id="anlSummary"></p>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm p-3">
+                                <h6 class="text-danger fw-bold"><i class="bi bi-calendar-x me-2"></i>Yoğun Günler</h6>
+                                <div id="anlBusyDays" class="d-flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm p-3">
+                                <h6 class="text-success fw-bold"><i class="bi bi-lightbulb me-2"></i>Koç Tavsiyesi</h6>
+                                <p class="small text-muted mt-2 mb-0" id="anlSuggestion"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold px-2 text-dark">ALIŞKANLIKLAR</h6>
+                    <ul class="list-group shadow-sm border-0 rounded-3" id="anlHabits"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                            </h6>
-                                           <span class="badge bg-primary">${rec.category}</span>
-                                       </div>
+<div class="modal fade" id="allEventsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-list-ul me-2"></i> Tüm Etkinlikler</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="allEventsModalBody">
+                <div class="text-center my-4 text-muted">Yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                        <p class="text-muted mb-2" style="font-size: 0.9rem;">
-                                           ${rec.description}
-                                       </p>
-
-                                       <div class="d-flex gap-3 mb-2 text-muted" style="font-size: 0.875rem;">
-                                           <span>
-
-                                                <i class="far fa-calendar me-1"></i>
-                                               ${formatDate(rec.suggested_date)}
-                                           </span>
-
-                                            <span>
-                                               <i class="far fa-clock me-1"></i>
-
-                                               ${rec.suggested_time} (${rec.duration_hours} saat)
-                                           </span>
-                                       </div>
-
-
-                                        <div class="recommendation-reason mb-2">
-                                           <i class="fas fa-lightbulb me-1"></i>
-                                           ${rec.reason}
-
-                                        </div>
-
-                                       <button class="btn btn-success btn-sm w-100"
-                                               onclick="addRecommendationToCalendar(${index})">
-
-                                              <i class="fas fa-plus me-1"></i>
-                                           Takvime Ekle
-
-                                       </button>
-                                   </div>
-                               </div>
-                           </div>
-                       `;
-                   });
-
-                   html += '</div>';
-                   $('#aiRecommendationsContainer').html(html);
-               }
-
-               // Kullanıcı Desenlerini Göster
-               function displayUserPatterns(patterns) {
-                   if (!patterns) return;
-                   const html = `
-                       <div class="col-3">
-                           <div class="pattern-stat">
-                               <h4>${patterns.total_events}</h4>
-                               <p>Toplam Etkinlik</p>
-
-                           </div>
-                       </div>
-                       <div class="col-3">
-                           <div class="pattern-stat">
-                               <h4>${patterns.favorite_day}</h4>
-
-                               <p>En Aktif Gün</p>
-                           </div>
-                       </div>
-                       <div class="col-3">
-                           <div class="pattern-stat">
-
-                               <h4>${patterns.favorite_time}</h4>
-                               <p>Tercih Zaman</p>
-                           </div>
-                       </div>
-                       <div class="col-3">
-
-                           <div class="pattern-stat">
-                               <h4>${patterns.favorite_category}</h4>
-                               <p>Ana Kategori</p>
-                           </div>
-                       </div>
-
-                   `;
-                   $('#userPatterns').html(html);
-               }
-
-               // Öneriyi Takvime Ekle
-               function addRecommendationToCalendar(index) {
-                   const rec = currentRecommendations[index];
-                   $.ajax({
-                       url: '/ai/create-from-recommendation', // Bu adres artık AIController'da doğru modeli bekliyor
-                       type: 'POST',
-                       contentType: 'application/json',
-                       data: JSON.stringify({
-                           title: rec.title,
-
-                           description: rec.description,
-                           suggestedDate: rec.suggested_date,
-                           suggestedTime: rec.suggested_time,
-                           category: rec.category,
-                           location: '',
-
-                           durationHours: rec.duration_hours
-                       }),
-                       success: function(response) {
-                           if (response.success) {
-                               toastr.success('✅ Etkinlik takvime eklendi!');
-
-                               setTimeout(() => location.reload(), 1500);
-                           } else {
-                               toastr.error('❌ Etkinlik eklenemedi: ' + response.message);
-                           }
-
-                       },
-                       error: function() {
-                           toastr.error('❌ Bir hata oluştu!');
-                       }
-                   });
-               }
-
-               // Hızlı Ekleme (Doğal Dil)
-               function quickAddEvent() {
-                   const prompt = $('#quickAddInput').val().trim();
-                   if (!prompt) {
-                       toastr.warning('⚠️ Lütfen bir metin girin');
-                       return;
-                   }
-
-                   const originalBtn = $('#quickAddInput').next('button');
-                   originalBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Ekleniyor...');
-
-                   $.ajax({
-                       url: '/ai/parse-and-create', // Bu adres artık AIController'da mevcut
-                       type: 'POST',
-                       contentType: 'application/json',
-                       data: JSON.stringify({ prompt: prompt }),
-                       success: function(response) {
-
-                           if (response.success) {
-                               toastr.success('✅ Etkinlik başarıyla oluşturuldu!');
-                               $('#quickAddInput').val('');
-                               setTimeout(() => location.reload(), 1500);
-
-                           } else {
-                               toastr.error('❌ Etkinlik oluşturulamadı: ' + response.message);
-                           }
-                       },
-                       error: function(xhr) {
-                           let errorMsg = '❌ AI parse işlemi başarısız!';
-                           if(xhr.responseJSON && xhr.responseJSON.message) {
-                               errorMsg = '❌ ' + xhr.responseJSON.message;
-                           }
-                           toastr.error(errorMsg);
-                       },
-                       complete: function() {
-                           originalBtn.prop('disabled', false).html('<i class="fas fa-magic me-1"></i>Ekle');
-                       }
-
-                   });
-               }
-
-               // Haftalık Analiz
-               function getWeeklyAnalysis() {
-                   const modal = new bootstrap.Modal(document.getElementById('weeklyAnalysisModal'));
-                   modal.show();
-
-                   $('#weeklyAnalysisContent').html(`
-                       <div class="text-center py-4">
-                           <div class="spinner-border text-success"></div>
-                           <p class="text-muted mt-2">Analiz ediliyor...</p>
-                       </div>
-                   `);
-                   $.ajax({
-                       url: '/ai/weekly-analysis', // Bu adres artık AIController'da mevcut
-                       type: 'GET',
-                       success: function(response) {
-                           if (response.success) {
-                               $('#weeklyAnalysisContent').html(`
-
-                                    <div class="alert alert-light border-start border-success border-4">
-                                       <h6 class="text-success mb-3">
-
-                                           <i class="fas fa-brain me-2"></i>
-                                           AI Analizi
-                                       </h6>
-
-                                           <p style="white-space: pre-line; line-height: 1.8;">${response.analysis}</p>
-                                   </div>
-                                   ${response.patterns ? `
-                                       <div
-        class="mt-3">
-                                           <h6>📊 İstatistikler</h6>
-                                           <div class="row g-2 mt-2">
-
-                                               <div class="col-6">
-                                                   <div class="p-3 bg-light rounded">
-
-                                                       <strong>Toplam:</strong> ${response.patterns.totalEvents} etkinlik
-                                                   </div>
-                                               </div>
-
-                                               <div class="col-6">
-                                                   <div class="p-3 bg-light rounded">
-
-                                                       <strong>Favori Kategori:</strong> ${response.patterns.favoriteCategory}
-                                                   </div>
-
-                                               </div>
-                                           </div>
-                                       </div>
-
-                                   ` : ''}
-                               `);
-                           } else {
-                               toastr.error('❌ Analiz alınamadı');
-                           }
-                       },
-                       error: function() {
-                           toastr.error('❌ Bir hata oluştu!');
-                       }
-                   });
-               }
-
-               // Yenile
-               function refreshAIRecommendations() {
-                   loadAIRecommendations();
-                   toastr.info('🔄 Öneriler yenileniyor...');
-               }
-
-               // Tarih Formatlama
-               function formatDate(dateStr) {
-                   const date = new Date(dateStr);
-                   const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-                   return date.toLocaleDateString('tr-TR', options);
-               }
-
-               // Modal Yükleme
-               document.getElementById("loadAllEventsBtn")?.addEventListener("click", function () {
-                   fetch("/Calendar/AllEventsPartial")
-                       .then(res => res.text())
-                       .then(html => {
-                           document.getElementById("allEventsModalBody").innerHTML = html;
-
-                           attachFilterHandler();
-                       });
-               });
-               function attachFilterHandler() {
-                   const form = document.getElementById("filterForm");
-                   if (!form) return;
-
-                   form.addEventListener("submit", function (e) {
-                       e.preventDefault();
-                       const tag = document.getElementById("filterTag")?.value || '';
-                       const status = document.getElementById("filterStatus")?.value || '';
-                       const params = new URLSearchParams({ tag, status });
-
-
-                       fetch("/Calendar/AllEventsPartial?" + params.toString())
-                           .then(res => res.text())
-                           .then(html => {
-                               document.getElementById("allEventsModalBody").innerHTML = html;
-                               attachFilterHandler();
-
-                           });
-                   });
-               }
-    </script>
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/tr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
+    <script>
+        let suggestedEventData = null;
+
+        $(function () {
+             // 1. AI SORGUSU GÖNDERME
+             $("#aiForm").on("submit", function (e) {
+                 e.preventDefault();
+                 var q = $("#aiQueryInput").val().trim();
+                 if (!q) return;
+
+                 $("#aiLoading").removeClass("d-none");
+                 $("#aiResultContainer").html("").hide();
+
+                 $.ajax({
+                     type: "POST",
+                     url: "/AI/GetSuggestion",
+                     contentType: "application/json",
+                     data: JSON.stringify({ Query: q }),
+                     success: function (res) {
+                         $("#aiLoading").addClass("d-none");
+                         if (res.success) {
+                             var d = res.suggestion;
+                             if (typeof d === 'string') {
+                                 try { d = JSON.parse(d); } catch { renderMsg(d); return; }
+                             }
+                             renderCards(d);
+                         } else {
+                             renderMsg("Hata: " + res.message);
+                         }
+                     },
+                     error: function () {
+                         $("#aiLoading").addClass("d-none");
+                         renderMsg("Sunucuya bağlanılamadı.");
+                     }
+                 });
+             });
+
+             // Mevcut "Tüm Etkinlikler" Buton İşlevi
+             $("#loadAllEventsBtn").click(function () {
+                fetch("/Calendar/AllEventsPartial").then(r => r.text()).then(h => {
+                    document.getElementById("allEventsModalBody").innerHTML = h;
+                });
+             });
+         });
+
+        // KARTLARI ÇİZDİRME (ANALİZ & ETKİNLİK)
+        function renderCards(data) {
+            suggestedEventData = data;
+            moment.locale('tr');
+            var dateStr = moment(data.startDate).format("DD MMMM YYYY, HH:mm");
+
+            // 1. ANALİZ KUTUSU
+            var analysisHtml = '';
+            var refsHtml = '';
+            if (data.referenceEvents && data.referenceEvents.length > 0) {
+                refsHtml = '<div class="mt-3 pt-3 border-top border-secondary border-opacity-10"><small class="fw-bold text-muted d-block mb-2" style="font-size:0.7rem;">REFERANS ALINAN GEÇMİŞ KAYITLAR</small>';
+                data.referenceEvents.forEach(i => refsHtml += `<div class="text-muted small mb-1"><i class="bi bi-clock-history me-2"></i>${i}</div>`);
+                refsHtml += '</div>';
+            }
+
+            if (data.analysisNote || refsHtml) {
+                analysisHtml = `
+                    <div class="card border-0 shadow-sm mb-4 analysis-box">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3"><i class="bi bi-graph-up-arrow text-primary fs-5"></i></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold text-primary mb-2">Calendar AI Analizi</h6>
+                                    <p class="text-dark small mb-0" style="line-height:1.5">${data.analysisNote || ''}</p>
+                                    ${refsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            // 2. ETKİNLİK ONAY KARTI
+            var eventHtml = `
+                <div class="card border-0 shadow-sm animate__animated animate__fadeInUp" style="border-radius: 15px;">
+                    <div class="card-body p-0">
+                        <div class="p-4 pb-0">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-25">ONAY BEKLİYOR</span>
+                            </div>
+                            <h3 class="fw-bold mb-2 text-dark">${data.title}</h3>
+                            <p class="text-muted mb-4">${data.description || 'Açıklama yok.'}</p>
+                        </div>
+
+                        <div class="bg-light p-4 border-top border-bottom">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-white p-2 rounded shadow-sm me-3"><i class="bi bi-calendar-event text-primary fs-5"></i></div>
+                                <div><small class="text-muted d-block" style="font-size:0.75rem">TARİH & SAAT</small><span class="fw-bold text-dark">${dateStr}</span></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white p-2 rounded shadow-sm me-3"><i class="bi bi-geo-alt text-danger fs-5"></i></div>
+                                <div><small class="text-muted d-block" style="font-size:0.75rem">KONUM</small><span class="fw-bold text-dark">${data.location || 'Konum yok'}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="p-4">
+                            <button onclick="saveAiEvent()" class="btn btn-success w-100 py-3 fw-bold rounded-3 shadow-sm" style="background-color: #198754;">
+                                <i class="bi bi-check-circle-fill me-2"></i>Onayla ve Takvime Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            $("#aiResultContainer").html(analysisHtml + eventHtml).hide().fadeIn();
+        }
+
+        // HAFTALIK ANALİZ FONKSİYONU
+        function openAnalysisModal() {
+            new bootstrap.Modal(document.getElementById('analysisModal')).show();
+            $("#anlLoading").removeClass("d-none"); $("#anlContent").hide();
+
+            $.ajax({
+                type: "POST", url: "/AI/GetWeeklyAnalysis",
+                success: function (res) {
+                    if (res.success) {
+                        var d = res.analysis;
+                        $("#anlSummary").text(d.summary);
+                        $("#anlSuggestion").text(d.suggestion);
+
+                        var days = "";
+                        d.busyDays.forEach(x => days += `<span class="badge bg-danger bg-opacity-75 p-2 me-1">${x}</span>`);
+                        $("#anlBusyDays").html(days);
+
+                        var habits = "";
+                        d.habits.forEach(x => habits += `<li class="list-group-item border-0 border-bottom"><i class="bi bi-check-circle-fill text-success me-2"></i>${x}</li>`);
+                        $("#anlHabits").html(habits);
+
+                        $("#anlLoading").addClass("d-none"); $("#anlContent").fadeIn();
+                    }
+                }
+            });
+        }
+
+        function renderMsg(msg) { $("#aiResultContainer").html(`<div class="alert alert-warning border-0 shadow-sm">${msg}</div>`).fadeIn(); }
+
+        // --- GÜNCELLENEN FONKSİYON ---
+        function saveAiEvent() {
+            if (!suggestedEventData) return;
+            var start = moment(suggestedEventData.startDate);
+            var payload = {
+                Title: suggestedEventData.title,
+                Description: suggestedEventData.description,
+                Location: suggestedEventData.location,
+                StartDate: start.format("YYYY-MM-DDTHH:mm:ss"),
+                EndDate: start.add(suggestedEventData.durationMinutes || 60, 'minutes').format("YYYY-MM-DDTHH:mm:ss"),
+                UserId: $("#currentUserId").val()
+            };
+
+            var btn = $("button[onclick='saveAiEvent()']");
+            var originalText = btn.html();
+            btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...');
+
+            $.ajax({
+                type: "POST",
+                url: "/Calendar/Api/AddEvent",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    if (res.success) {
+                        toastr.success('Etkinlik başarıyla eklendi!');
+
+                        // SAYFA YENİLEMEK YERİNE ARAYÜZÜ SIFIRLIYORUZ:
+
+                        // 1. Sonuç kartını yavaşça gizle ve içini boşalt
+                        $("#aiResultContainer").fadeOut(500, function() {
+                            $(this).html("");
+                        });
+
+                        // 2. Input alanını temizle
+                        $("#aiQueryInput").val("");
+
+                        // 3. Butonu tekrar aktif et (Her ihtimale karşı)
+                        btn.prop("disabled", false).html(originalText);
+
+                        // Not: Sayfa yenilenmediği için "Toplam Etkinlik" sayıları değişmeyecektir.
+                        // Eğer sayıları da güncellemek istersen buraya ek bir AJAX isteği yazabilirsin.
+
+                    } else {
+                        toastr.error("Hata: " + res.message);
+                        btn.prop("disabled", false).html(originalText);
+                    }
+                },
+                error: function() {
+                    toastr.error("Sunucu hatası.");
+                    btn.prop("disabled", false).html(originalText);
+                }
+            });
+        }
+    </script>
+}
 }

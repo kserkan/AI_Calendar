@@ -105,3 +105,37 @@ body.dark-mode .fc-daygrid-day {
 body.dark-mode .fc-scrollgrid {
     border-color: #444;
 }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" >
+
+<link rel="stylesheet" href="~/css/dark-mode.css" >
+/* wwwroot/css/dark-mode.css */
+/* Gemini AI Gradyan Yazý */
+.gemini-gradient-text {
+    background: -webkit-linear-gradient(45deg, #4285F4, #9B72CB);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #4285F4; /* Fallback */
+}
+
+/* Gemini AI Gradyan Kenarlýk */
+.gemini-border {
+    position: relative;
+    background: #fff;
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+}
+
+    .gemini-border::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: -1;
+        margin: -2px;
+        border-radius: inherit;
+        background: linear-gradient(45deg, #4285F4, #9B72CB);
+    }

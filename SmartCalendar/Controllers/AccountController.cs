@@ -84,35 +84,27 @@ public class AccountController : Controller
     public async Task<IActionResult> ApiLogin([FromBody] UserLoginDto model)
     {
         if (!ModelState.IsValid)
-        {
             return Json(new { success = false, message = "Geçersiz veri" });
-        }
 
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
-        {
-            return Json(new { success = false, message = "Geçersiz giriş bilgileri!" });
-        }
+            return Json(new { success = false, message = "Kullanıcı bulunamadı!" });
 
         var result = await _signInManager.PasswordSignInAsync(user, model.Password, isPersistent: true, lockoutOnFailure: false);
         if (result.Succeeded)
         {
-            // JWT token oluştur (basit implementation)
-            var token = Guid.NewGuid().ToString(); // Gerçek JWT token implementasyonu eklenebilir
-            
-            return Json(new { 
-                success = true, 
+            // 👇 DÜZELTME BURADA: "userId"yi en dışa aldık.
+            return Json(new
+            {
+                success = true,
                 message = "Giriş başarılı",
-                token = token,
-                user = new {
-                    id = user.Id,
-                    email = user.Email,
-                    fullName = user.FullName
-                }
+                userId = user.Id,    // 🔥 Flutter bunu okuyabiliyor
+                email = user.Email,
+                fullName = user.FullName
             });
         }
 
-        return Json(new { success = false, message = "Geçersiz giriş bilgileri!" });
+        return Json(new { success = false, message = "Şifre hatalı!" });
     }
 
     // API: POST /Account/Api/Register

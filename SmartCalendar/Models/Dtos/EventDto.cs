@@ -11,6 +11,7 @@
         public int ReminderMinutesBefore { get; set; }
 
         public List<int>? TagIds { get; set; }
+        public string UserId { get; set; }
     }
 
 }
