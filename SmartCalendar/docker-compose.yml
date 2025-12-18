@@ -28,9 +28,17 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Veritabanı bağlantısı (Docker içinde 'host' yerine 'service name' kullanılır)
+      - ConnectionStrings__DefaultConnection=Server=mysql;Database=calendar_db;User=root;Password=root;
+      # Gemini API Key (Eğer kod içinde yoksa buraya ekleyebilirsin)
+      # - Gemini__ApiKey=BURAYA_KEY_GELECEK
     ports:
       - "5111:8080"
+    volumes:
+      # --- İŞTE GİRİŞ SORUNUNU ÇÖZEN SATIR ---
+      - ./keys:/root/.aspnet/DataProtection-Keys
+      # ---------------------------------------
     networks:
       - smartcalendar-network
 
