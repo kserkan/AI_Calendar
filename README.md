@@ -1,10 +1,10 @@
-# 📅 SmartCalendar
+﻿# ­şôà SmartCalendar
 
 **SmartCalendar** is an intelligent calendar management application built with **ASP.NET Core 8.0** that combines event management, AI-powered recommendations, Google Calendar integration, and weather information all in one platform.
 
 ---
 
-## 🎯 Project Overview
+## ­şÄ» Project Overview
 
 SmartCalendar is a full-stack web application designed to help users:
 - **Manage events** with detailed information (title, date, time, location, description)
@@ -17,7 +17,7 @@ SmartCalendar is a full-stack web application designed to help users:
 
 ---
 
-## 🏗️ Architecture
+## ­şÅù´©Å Architecture
 
 ### Technology Stack
 
@@ -36,54 +36,54 @@ SmartCalendar is a full-stack web application designed to help users:
 
 ```
 SmartCalendar/
-├── Controllers/              # MVC Controllers & API Endpoints
-│   ├── AccountController.cs         # User authentication & registration
-│   ├── CalendarController.cs        # Event CRUD operations
-│   ├── AIController.cs              # AI recommendations & parsing
-│   ├── DashboardController.cs       # User dashboard
-│   ├── HomeController.cs            # Main page
-│   ├── ProfileController.cs         # User profile management
-│   ├── EventParserController.cs     # Natural language event parsing
-│   └── WeatherController.cs         # Weather information
-│
-├── Models/                  # Data Models & DTOs
-│   ├── User.cs                      # User model (extends IdentityUser)
-│   ├── Event.cs                     # Event model with reminders
-│   ├── EventDto.cs                  # DTO for event transfer
-│   ├── Tag.cs                       # Event tags
-│   ├── EventTag.cs                  # Many-to-many relationship
-│   ├── HolidayItem.cs               # Holiday model
-│   ├── RecommendationModel.cs       # AI recommendations
-│   ├── PromptRequest.cs             # AI request model
-│   ├── Weather/                     # Weather-related models
-│   └── ViewModels/                  # View-specific models
-│
-├── Services/                # Business Logic & External Services
-│   ├── GoogleCalendarService.cs     # Google Calendar API integration
-│   ├── AIService.cs                 # Gemini AI integration
-│   ├── WeatherService.cs            # Weather API integration
-│   ├── HolidayService.cs            # Holiday information
-│   ├── ReminderService.cs           # Background reminder service
-│   └── SmtpEmailService.cs          # Email notifications
-│
-├── Data/                    # Database Context & Migrations
-│   ├── ApplicationDbContext.cs      # EF Core DbContext
-│   ├── DesignTimeDbContextFactory.cs
-│   ├── Migrations/                  # Database migrations
-│   └── Seed/                        # Initial database seed
-│
-├── Views/                   # Razor Views
-├── wwwroot/                 # Static files (CSS, JS, images)
-├── Program.cs               # Application configuration & startup
-├── appsettings.json         # Configuration settings
-├── appsettings.Development.json
-├── Dockerfile               # Docker build configuration
-└── docker-compose.yml       # Multi-container orchestration
+Ôö£ÔöÇÔöÇ Controllers/              # MVC Controllers & API Endpoints
+Ôöé   Ôö£ÔöÇÔöÇ AccountController.cs         # User authentication & registration
+Ôöé   Ôö£ÔöÇÔöÇ CalendarController.cs        # Event CRUD operations
+Ôöé   Ôö£ÔöÇÔöÇ AIController.cs              # AI recommendations & parsing
+Ôöé   Ôö£ÔöÇÔöÇ DashboardController.cs       # User dashboard
+Ôöé   Ôö£ÔöÇÔöÇ HomeController.cs            # Main page
+Ôöé   Ôö£ÔöÇÔöÇ ProfileController.cs         # User profile management
+Ôöé   Ôö£ÔöÇÔöÇ EventParserController.cs     # Natural language event parsing
+Ôöé   ÔööÔöÇÔöÇ WeatherController.cs         # Weather information
+Ôöé
+Ôö£ÔöÇÔöÇ Models/                  # Data Models & DTOs
+Ôöé   Ôö£ÔöÇÔöÇ User.cs                      # User model (extends IdentityUser)
+Ôöé   Ôö£ÔöÇÔöÇ Event.cs                     # Event model with reminders
+Ôöé   Ôö£ÔöÇÔöÇ EventDto.cs                  # DTO for event transfer
+Ôöé   Ôö£ÔöÇÔöÇ Tag.cs                       # Event tags
+Ôöé   Ôö£ÔöÇÔöÇ EventTag.cs                  # Many-to-many relationship
+Ôöé   Ôö£ÔöÇÔöÇ HolidayItem.cs               # Holiday model
+Ôöé   Ôö£ÔöÇÔöÇ RecommendationModel.cs       # AI recommendations
+Ôöé   Ôö£ÔöÇÔöÇ PromptRequest.cs             # AI request model
+Ôöé   Ôö£ÔöÇÔöÇ Weather/                     # Weather-related models
+Ôöé   ÔööÔöÇÔöÇ ViewModels/                  # View-specific models
+Ôöé
+Ôö£ÔöÇÔöÇ Services/                # Business Logic & External Services
+Ôöé   Ôö£ÔöÇÔöÇ GoogleCalendarService.cs     # Google Calendar API integration
+Ôöé   Ôö£ÔöÇÔöÇ AIService.cs                 # Gemini AI integration
+Ôöé   Ôö£ÔöÇÔöÇ WeatherService.cs            # Weather API integration
+Ôöé   Ôö£ÔöÇÔöÇ HolidayService.cs            # Holiday information
+Ôöé   Ôö£ÔöÇÔöÇ ReminderService.cs           # Background reminder service
+Ôöé   ÔööÔöÇÔöÇ SmtpEmailService.cs          # Email notifications
+Ôöé
+Ôö£ÔöÇÔöÇ Data/                    # Database Context & Migrations
+Ôöé   Ôö£ÔöÇÔöÇ ApplicationDbContext.cs      # EF Core DbContext
+Ôöé   Ôö£ÔöÇÔöÇ DesignTimeDbContextFactory.cs
+Ôöé   Ôö£ÔöÇÔöÇ Migrations/                  # Database migrations
+Ôöé   ÔööÔöÇÔöÇ Seed/                        # Initial database seed
+Ôöé
+Ôö£ÔöÇÔöÇ Views/                   # Razor Views
+Ôö£ÔöÇÔöÇ wwwroot/                 # Static files (CSS, JS, images)
+Ôö£ÔöÇÔöÇ Program.cs               # Application configuration & startup
+Ôö£ÔöÇÔöÇ appsettings.json         # Configuration settings
+Ôö£ÔöÇÔöÇ appsettings.Development.json
+Ôö£ÔöÇÔöÇ Dockerfile               # Docker build configuration
+ÔööÔöÇÔöÇ docker-compose.yml       # Multi-container orchestration
 ```
 
 ---
 
-## 🔑 Key Features
+## ­şöæ Key Features
 
 ### 1. **User Authentication & Authorization**
 - Local registration and login
@@ -125,21 +125,21 @@ SmartCalendar/
 
 ---
 
-## 🛠️ Technology Details
+## ­şøá´©Å Technology Details
 
 ### Authentication Flow
 
 ```
 User Login/Register
-    ↓
+    Ôåô
 ASP.NET Core Identity
-    ├─→ Cookie Authentication (Web browsers)
-    ├─→ JWT Authentication (Mobile/API clients)
-    └─→ Google OAuth2 (SSO)
-    ↓
+    Ôö£ÔöÇÔåÆ Cookie Authentication (Web browsers)
+    Ôö£ÔöÇÔåÆ JWT Authentication (Mobile/API clients)
+    ÔööÔöÇÔåÆ Google OAuth2 (SSO)
+    Ôåô
 Session Established
-    ├─→ Claims-based authorization
-    └─→ Role-based access control
+    Ôö£ÔöÇÔåÆ Claims-based authorization
+    ÔööÔöÇÔåÆ Role-based access control
 ```
 
 ### Data Models Overview
@@ -174,7 +174,7 @@ public class Event
 
 ---
 
-## 🚀 Getting Started
+## ­şÜÇ Getting Started
 
 ### Prerequisites
 
@@ -259,7 +259,7 @@ docker-compose down
 
 ---
 
-## 📡 API Endpoints
+## ­şôí API Endpoints
 
 ### Authentication
 | Method | Endpoint | Description |
@@ -303,7 +303,7 @@ docker-compose down
 
 ---
 
-## 🔐 Security Features
+## ­şöÉ Security Features
 
 1. **Authentication**
    - Password hashing with PBKDF2
@@ -329,7 +329,7 @@ docker-compose down
 
 ---
 
-## 📊 Database Schema
+## ­şôè Database Schema
 
 ### Key Tables
 
@@ -341,7 +341,7 @@ docker-compose down
 - Id (Primary Key)
 - Title, Description, Location
 - StartDate, EndDate
-- UserId (Foreign Key → AspNetUsers)
+- UserId (Foreign Key ÔåÆ AspNetUsers)
 - ReminderMinutesBefore, ReminderSent
 - GoogleEventId (for sync)
 
@@ -355,7 +355,7 @@ docker-compose down
 
 ---
 
-## 🎨 Frontend
+## ­şÄ¿ Frontend
 
 ### Views
 - **Home**: Landing page & authentication
@@ -370,7 +370,7 @@ docker-compose down
 
 ---
 
-## 🔄 Background Services
+## ­şöä Background Services
 
 ### ReminderService (Hosted Service)
 - Runs continuously in the background
@@ -380,7 +380,7 @@ docker-compose down
 
 ---
 
-## 📝 Environment Variables
+## ­şôØ Environment Variables
 
 ### Development
 ```
@@ -396,7 +396,7 @@ ConnectionStrings__DefaultConnection=Server=mysql;Database=calendar_db;User=root
 
 ---
 
-## 🐛 Troubleshooting
+## ­şÉø Troubleshooting
 
 ### Database Connection Issues
 - Ensure MySQL is running on port 3306
@@ -425,7 +425,7 @@ ConnectionStrings__DefaultConnection=Server=mysql;Database=calendar_db;User=root
 
 ---
 
-## 🚀 Deployment
+## ­şÜÇ Deployment
 
 ### Azure App Service
 ```bash
@@ -447,7 +447,7 @@ kubectl apply -f k8s-deployment.yaml
 
 ---
 
-## 📚 Additional Resources
+## ­şôÜ Additional Resources
 
 - [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
 - [Entity Framework Core](https://docs.microsoft.com/ef/core)
@@ -457,20 +457,20 @@ kubectl apply -f k8s-deployment.yaml
 
 ---
 
-## 👨‍💻 Development Team
+## ­şæ¿ÔÇı­şÆ╗ Development Team
 
-**Maintainer**: Kerim Serkan Şahin
+**Maintainer**: Kerim Serkan ┼Şahin
 **Email**: kerimserkann@gmail.com
 
 ---
 
-## 📄 License
+## ­şôä License
 
 This project is proprietary software. All rights reserved.
 
 ---
 
-## 🤝 Contributing
+## ­şñØ Contributing
 
 For contributions, please:
 1. Create a feature branch
@@ -480,7 +480,7 @@ For contributions, please:
 
 ---
 
-## 📞 Support
+## ­şôŞ Support
 
 For issues, questions, or feature requests, please:
 - Open an issue on GitHub

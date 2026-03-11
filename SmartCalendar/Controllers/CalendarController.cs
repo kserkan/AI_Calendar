@@ -247,50 +247,61 @@ public class CalendarController : Controller
     }
 
     // API: POST /Calendar/Api/AddEvent
+    /// -------------------------------------------------------------------------
+    // 🚀 API METOTLARI (DÜZELTİLMİŞ)
+    // -------------------------------------------------------------------------
+
     // API: POST /Calendar/Api/AddEvent
     [AllowAnonymous]
     [HttpPost("Api/AddEvent")]
     public async Task<IActionResult> ApiAddEvent([FromBody] SmartCalendar.Models.Dtos.EventDto model)
     {
-        Console.WriteLine("--------------------------------------------------");
-        Console.WriteLine($"🔍 EKLEME İSTEĞİ GELDİ!");
-        Console.WriteLine($"📦 Gelen Başlık: {model.Title}");
-
-        // DİKKAT: Mobilden "UserId" isminde geliyor, DTO'da bu property olmalı.
-        // Eğer model.UserId hata veriyorsa, EventDto sınıfına 'public string UserId { get; set; }' ekle.
-        Console.WriteLine($"👤 Gelen UserId: '{model.UserId}'");
+        // 1. Loglama (Hata takibi için)
+        Console.WriteLine($"📲 API AddEvent İsteği Geldi: {model.Title} - UserID: {model.UserId}");
 
         try
         {
-            // 🛑 SİLİNEN SATIR: var userId = "bbc1..."; (ARTIK BU YOK!)
-
-            // Mobilden gelen ID'yi kontrol et
+            // 2. Validasyon (UserId Kontrolü)
             if (string.IsNullOrEmpty(model.UserId) || model.UserId == "0")
             {
-                return Json(new { success = false, message = "UserId boş veya hatalı geldi!" });
+                return BadRequest(new { success = false, message = "Geçersiz Kullanıcı ID" });
             }
 
+            // 3. Etkinlik Nesnesini Oluştur
             var newEvent = new Event
             {
                 Title = model.Title,
                 StartDate = model.StartDate,
                 EndDate = model.EndDate,
-                Description = model.Description,
-                Location = model.Location,
+                Description = model.Description ?? "",
+                Location = model.Location ?? "",
                 ReminderMinutesBefore = model.ReminderMinutesBefore,
                 ReminderSent = false,
-                UserId = model.UserId, // 🔥 ARTIK SABİT DEĞİL, MOBİLDEN GELEN DEĞER!
+                UserId = model.UserId,
                 Tags = new List<Tag>()
             };
 
+            // 4. Veritabanına Kaydet
             _context.Events.Add(newEvent);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Etkinlik başarıyla eklendi", eventId = newEvent.Id });
+            Console.WriteLine($"✅ Etkinlik Kaydedildi. ID: {newEvent.Id}");
+
+            // 5. KRİTİK DÜZELTME: return Json() yerine return Ok() kullanıyoruz.
+            // Bu sayede JSON formatı ve encoding API standartlarına uygun gidiyor.
+            return Ok(new 
+            { 
+                success = true, 
+                message = "Etkinlik başarıyla eklendi", 
+                eventId = newEvent.Id 
+            });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = ex.Message });
+            Console.WriteLine($"🛑 HATA: {ex.Message}");
+            // Hata durumunda 200 dönüp success:false demek yerine 
+            // 500 veya 400 dönmek daha doğrudur ama senin Flutter yapın için 200 dönüyoruz:
+            return Ok(new { success = false, message = ex.Message });
         }
     }
 
@@ -304,20 +315,22 @@ public class CalendarController : Controller
             var eventToUpdate = await _context.Events.FirstOrDefaultAsync(e => e.Id == model.Id);
 
             if (eventToUpdate == null)
-                return Json(new { success = false, message = "Etkinlik bulunamadı" });
+                return NotFound(new { success = false, message = "Etkinlik bulunamadı" });
 
             eventToUpdate.Title = model.Title;
             eventToUpdate.StartDate = model.StartDate;
             eventToUpdate.EndDate = model.EndDate;
-            eventToUpdate.Description = model.Description;
-            eventToUpdate.Location = model.Location;
+            eventToUpdate.Description = model.Description ?? "";
+            eventToUpdate.Location = model.Location ?? "";
 
             await _context.SaveChangesAsync();
-            return Json(new { success = true, message = "Etkinlik başarıyla güncellendi" });
+
+            // DÜZELTME: return Ok() kullanıldı
+            return Ok(new { success = true, message = "Etkinlik güncellendi" });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = ex.Message });
+            return Ok(new { success = false, message = ex.Message });
         }
     }
 
@@ -331,16 +344,17 @@ public class CalendarController : Controller
             var eventToDelete = await _context.Events.FirstOrDefaultAsync(e => e.Id == request.Id);
 
             if (eventToDelete == null)
-                return Json(new { success = false, message = "Etkinlik bulunamadı" });
+                return NotFound(new { success = false, message = "Etkinlik bulunamadı" });
 
             _context.Events.Remove(eventToDelete);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Etkinlik başarıyla silindi" });
+            // DÜZELTME: return Ok() kullanıldı
+            return Ok(new { success = true, message = "Etkinlik silindi" });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = ex.Message });
+            return Ok(new { success = false, message = ex.Message });
         }
     }
 

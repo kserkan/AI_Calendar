@@ -142,8 +142,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
-        db.Database.Migrate(); // Veritabanı yoksa oluşturur
-        Console.WriteLine("--> Veritabanı migration islemi basarili.");
+        await db.Database.MigrateAsync(); // Veritabanı yoksa oluşturur
+        await ApplicationDbContextSeeder.SeedAsync(db); // Seed verisini yükle
+        Console.WriteLine("--> Veritabanı migration ve seed islemi basarili.");
     }
     catch (Exception ex)
     {
